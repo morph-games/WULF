@@ -1,0 +1,11 @@
+const SCREEN_WIDTH = 320;
+const SCREEN_HEIGHT = 200;
+const X_INDEX = 0;
+const Y_INDEX = 1;
+
+export {
+	SCREEN_HEIGHT,
+	SCREEN_WIDTH,
+	X_INDEX,
+	Y_INDEX,
+};

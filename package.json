@@ -1,0 +1,33 @@
+{
+  "name": "wulf",
+  "version": "0.1.0",
+  "description": "Web-based Ultima-like Framework",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "vite",
+    "preview": "vite preview",
+    "build": "vite build --base=./"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/morph-games/WULF.git"
+  },
+  "keywords": [
+    "Ultima",
+    "RPG",
+    "Retro",
+    "Game"
+  ],
+  "author": "Luke Nickerson",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/morph-games/WULF/issues"
+  },
+  "homepage": "https://github.com/morph-games/WULF#readme",
+  "devDependencies": {
+    "vite": "^6.3.5",
+    "rocket-boots-eslint": "github:rocket-boots/rocket-boots-eslint"
+  }
+}
