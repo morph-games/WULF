@@ -40,11 +40,10 @@ export default class TextController {
 	drawLetter(ctx, letter) {
 		try {
 			this.fss.drawImageToContext(
+				letter,
 				ctx,
 				this.cursorCol * this.fss.spriteSize,
 				this.cursorRow * this.fss.spriteSize,
-				'letters',
-				letter,
 			);
 		} catch (err) {
 			// If we don't find the letter, then just skip it

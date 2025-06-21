@@ -5,6 +5,7 @@ module.exports = {
 	rules: {
 		// your custom rules here
 		'max-lines': ['error', { max: 600, skipComments: true }],
+		// 'no-console': [],
 	},
 	parserOptions: {
 		ecmaVersion: 2021,

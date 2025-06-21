@@ -41,7 +41,7 @@ export default class GameConsole {
 		// Get last few log items, but they may have long text, so we have to break them up
 		this.log.slice(-this.textRows)
 			.forEach((text) => { // Loop over them
-				console.log(text, '-->', TextController.splitText(text, this.columns - spacingLength));
+				// console.log(text, '-->', TextController.splitText(text, this.columns - spacingLength));
 				TextController.splitText(text, this.columns - spacingLength) // Break into array
 					.forEach((line, i) => {
 						// Then add in spacing or cursor
@@ -67,7 +67,7 @@ export default class GameConsole {
 
 	printLines(linesArr) {
 		const lines = linesArr || this.getPrintableLines();
-		console.log('Printable lines:', lines);
+		// console.log('Printable lines:', lines);
 		lines.forEach((t, i) => this.printLine(t, i));
 	}
 

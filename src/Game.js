@@ -4,6 +4,8 @@ import GameConsole from './GameConsole.js';
 import GameStorage from './GameStorage.js';
 import World from './World.js';
 import SpriteSheet from './Spritesheet.js';
+import InputController from './InputController.js';
+import WorldCommunicator from './WorldCommunicator.js';
 // import WorldChunk from './WorldChunk.js';
 
 const wait = (ms) => (new Promise((resolve) => { window.setTimeout(resolve, ms); }));
@@ -28,6 +30,8 @@ function testFontDraw(gCanvas) {
 
 export default class Game {
 	constructor(options = {}) {
+		this.states = options.states || {};
+		this.inputCtrl = new InputController(this.states);
 		this.screenWidth = options.screen?.width || 320;
 		this.screenHeight = options.screen?.height || 200;
 		this.screenSelector = options.screen?.containerSelector || '#wulf-screen';
@@ -35,6 +39,7 @@ export default class Game {
 		this.gameCanvas = new GameCanvas(this.mainCanvasId, [this.screenWidth, this.screenHeight]);
 		this.gameStorage = new GameStorage(options.gameName || 'WULF');
 		this.world = new World(options.world || {});
+		this.worldComm = new WorldCommunicator(options.world || {});
 		this.ss = new SpriteSheet(options?.spritesheets?.main);
 		this.fontsSpritesheet = new SpriteSheet(options?.spritesheets?.fonts);
 		this.textCtrl = new TextController(this.fontsSpritesheet);
@@ -42,6 +47,9 @@ export default class Game {
 		this.mapFocus = [0, 0];
 		this.mapDisplaySizeX = 20;
 		this.mapDisplaySizeY = 10;
+		this.visibleWorld = {};
+		this.party = {};
+		this.avatarWhoId = null;
 	}
 
 	static waitForDom() {
@@ -64,36 +72,115 @@ export default class Game {
 	async loadGame() {
 		// this.gameStorage.saveSave(0, 'test123', { mydata: 123 });
 		// TODO: Load data
-		this.world.load();
+		this.avatarWhoId = 'my-avatar-1';
+		this.worldComm.load();
 	}
 
-	drawTerrain() {
+	async sendWorldCommand(worldCommand) {
+		const [outcome, visibleWorld, party] = await this.worldComm.sendCommandToWorld(worldCommand, this.avatarWhoId);
+		this.visibleWorld = Object.freeze(structuredClone(visibleWorld));
+		this.party = Object.freeze(structuredClone(party));
+		return outcome;
+	}
+
+	refocus() {
+		this.mapFocus[0] = this.party?.avatar.visibleWorldX || 0;
+		this.mapFocus[1] = this.party?.avatar.visibleWorldY || 0;
+	}
+
+	async executeCommand(commandString) {
+		const print = (text) => this.mainConsole.print(text);
+		console.log('Command:', commandString);
+		const aliases = {
+			vol: 'volume',
+		};
+		const clientOnlyCommands = {
+			volume: (direction) => {
+				// TODO: do volume controls
+			},
+		};
+		const commandWords = String(commandString).toLowerCase().split(' ');
+		const aliasCommand = aliases[commandWords[0]];
+		if (aliasCommand) commandWords[0] = aliasCommand;
+		// See if the command is do be done on the client-side only
+		const fn = clientOnlyCommands[commandWords[0]];
+		if (fn) {
+			const commandParams = commandWords.slice(1);
+			await fn(...commandParams);
+			return;
+		}
+		// Send the command to the world (server)
+		const [outcome, visibleWorld, party] = await this.worldComm.sendCommandToWorld(commandWords, this.avatarWhoId);
+		// Handle the outcome
+		if (outcome.message) print(outcome.message);
+		this.handleIncomingData({ visibleWorld, party });
+	}
+
+	getMapFocusTopLeft() {
 		const [centerX, centerY] = this.mapFocus;
-		const terrainSprites = this.world.getTerrainSprites(
+		return [
 			centerX - Math.floor(this.mapDisplaySizeX / 2),
 			centerY - Math.floor(this.mapDisplaySizeY / 2),
-			this.mapDisplaySizeX,
-			this.mapDisplaySizeY,
+		];
+	}
+
+	drawSprite(spriteName, x, y) {
+		if (!spriteName) return;
+		this.ss.drawImageToContext(
+			spriteName,
+			this.gameCanvas.ctx,
+			x * this.ss.spriteSize,
+			y * this.ss.spriteSize,
 		);
-		terrainSprites.forEach((row, y) => {
+	}
+
+	drawSprites2d(sprites2dArray) {
+		sprites2dArray.forEach((row, y) => {
 			row.forEach((spriteName, x) => {
-				this.ss.drawImageToContext(
-					this.gameCanvas.ctx,
-					x * this.ss.spriteSize,
-					y * this.ss.spriteSize,
-					'terrain',
-					spriteName,
-				);
+				this.drawSprite(spriteName, x, y);
 			});
 		});
 	}
 
+	drawSpritesArray(sprites = []) {
+		sprites.forEach((spriteArray) => {
+			const [spriteName, x, y] = spriteArray;
+			this.drawSprite(spriteName, x, y);
+		});
+	}
+
+	drawTerrain() {
+		this.drawSprites2d(this.visibleWorld.terrain.sprites, 'terrain');
+	}
+
+	drawProps() {
+		this.drawSprites2d(this.visibleWorld.props.sprites, 'terrain');
+	}
+
+	drawAvatar() {
+		const { visibleWorldX, visibleWorldY, sprite } = this.party.avatar;
+		this.drawSprite(sprite, visibleWorldX, visibleWorldY);
+	}
+
 	drawMap() {
 		this.drawTerrain();
-		// TODO: draw props / cities
+		this.drawProps();
 		// TODO: draw items
 		// TODO: draw borders
 		// TODO: draw actors
+		this.drawAvatar();
+	}
+
+	handleIncomingData(data) {
+		console.log('incoming', data);
+		const { visibleWorld, party } = data;
+		this.visibleWorld = Object.freeze(structuredClone(visibleWorld));
+		this.party = Object.freeze(structuredClone(party));
+		// Handle the outcome
+		// if (outcome.message) print(outcome.message);
+		// Refocus the map on the avatar, and re-draw
+		this.refocus();
+		this.drawMap();
 	}
 
 	async setup() {
@@ -105,7 +192,7 @@ export default class Game {
 
 		// await this.textCtrl.setup();
 		await this.mainConsole.setup(this.gameCanvas);
-		await this.world.setup();
+		// await this.world.setup();
 
 		this.mainConsole.print('A flash of red...');
 		// await wait(1000);
@@ -114,20 +201,17 @@ export default class Game {
 		this.mainConsole.print('You have awoken in a strange world.');
 		// testFontDraw(this.gameCanvas);
 
+		this.loadGame();
+
+		await this.worldComm.connect(this.avatarWhoId, this.mapDisplaySizeX, this.mapDisplaySizeY);
+		this.worldComm.on('data', (data) => this.handleIncomingData(data));
+		await this.sendWorldCommand('ping', this.avatarWhoId); // needed to load the map
+
 		this.drawMap();
 
-		window.addEventListener('keydown', (e) => {
-			if (e.key === 'ArrowUp' || e.key === 'w') {
-				this.mapFocus[1] -= 1;
-			} else if (e.key === 'ArrowDown' || e.key === 's') {
-				this.mapFocus[1] += 1;
-			} else if (e.key === 'ArrowLeft' || e.key === 'a') {
-				this.mapFocus[0] -= 1;
-			} else if (e.key === 'ArrowRight' || e.key === 'd') {
-				this.mapFocus[0] += 1;
-			}
-			this.drawMap();
-		});
+		this.inputCtrl.on('command', (command) => this.executeCommand(command));
+		this.inputCtrl.on('missingCommand', (...args) => console.warn('Missing command', args));
+		this.inputCtrl.setState('travel');
 	}
 
 	async start() {

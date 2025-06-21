@@ -9,8 +9,8 @@ export default class Spritesheet extends GameImage {
 		const isParam1Object = typeof srcOrOptions === 'object';
 		const src = isParam1Object ? srcOrOptions?.src || srcOrOptions?.url : srcOrOptions;
 		super(src);
-		const a = (isParam1Object ? srcOrOptions?.atlas : atlas) || {};
-		this.atlas = { ...a };
+		const a = (isParam1Object ? srcOrOptions?.atlas : atlas) || [];
+		this.atlas = [...a];
 		const size = (isParam1Object ? srcOrOptions?.size : spriteSize) || 16;
 		this.spriteSize = size;
 		this.sprites = {};
@@ -26,14 +26,14 @@ export default class Spritesheet extends GameImage {
 		}
 	}
 
-	getCoordinates(groupName, spriteName) {
-		const groupAtlas = this.atlas[groupName];
-		if (!groupAtlas) throw new Error(`Group ${groupName} not found in atlas`);
+	getCoordinates(spriteName) {
+		// const groupAtlas = this.atlas[groupName];
+		// if (!groupAtlas) throw new Error(`Group ${groupName} not found in atlas`);
 		let yIndex = -1;
 		let xIndex = -1;
-		groupAtlas.forEach((rowObj, i) => {
+		this.atlas.forEach((rowObj, i) => {
 			// console.log('Looking in rowObj', rowObj);
-			if (!rowObj.names) throw new Error('Atlas row is missing names array');
+			if (!rowObj.names) return; // throw new Error('Atlas row is missing names array');
 			const xi = rowObj.names.findIndex((name) => spriteName === name);
 			if (xi !== -1) {
 				xIndex = xi;
@@ -44,8 +44,8 @@ export default class Spritesheet extends GameImage {
 		return [xIndex * this.spriteSize, yIndex * this.spriteSize];
 	}
 
-	drawImageToContext(ctx, x, y, groupName, spriteName) {
-		const [sx, sy] = this.getCoordinates(groupName, spriteName);
+	drawImageToContext(spriteName, ctx, x, y) {
+		const [sx, sy] = this.getCoordinates(spriteName);
 		ctx.drawImage(
 			this,
 			// Source
@@ -72,7 +72,7 @@ export default class Spritesheet extends GameImage {
 		return new GameImage(dataUri);
 	}
 
-	// TODO: Do we need this? We probably don't want to parse into separate images
+	// TODO: If we want this it'll need to be rewritten to remove the group
 	parse() {
 		// const [sheetCanvas, sheetCtx] = this.sheet.getCanvasContext();
 		const [canvas, ctx] = GameImage.getCanvasContext(this.spriteSize, this.spriteSize);
@@ -125,7 +125,7 @@ export default class Spritesheet extends GameImage {
 		// newSprite.replaceColor([17, 17, 51], [50, 50, 50]);
 		// newSprite.replaceColor([238, 238, 204], light);
 		newSprite.replaceColors(SCROLL_COLORS, [light, dark]);
-		const fullId = SpriteSheet.makeColorId(id, colors);
+		const fullId = Spritesheet.makeColorId(id, colors);
 		this.sprites[fullId] = newSprite;
 		return newSprite;
 	}
@@ -138,7 +138,7 @@ export default class Spritesheet extends GameImage {
 
 	get(id, colors) {
 		if (!colors) return this.sprites[id];
-		const fullId = SpriteSheet.makeColorId(id, colors);
+		const fullId = Spritesheet.makeColorId(id, colors);
 		const sprite = this.sprites[fullId];
 		if (sprite) return sprite;
 		return this.makeColoredSprite(id, colors);
