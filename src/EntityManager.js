@@ -2,13 +2,16 @@ export default class EntityManager {
 	constructor(maps) {
 		this.all = maps.reduce((arr, map) => ([...arr, ...map.getEntities()]), []);
 		this.all.forEach((ent, i) => {
-			ent.entId = i; // eslint-disable-line no-param-reassign
-			if (ent.isActor) {
+			/* eslint-disable no-param-reassign */
+			ent.entId = i;
+			// FIXME
+			if (ent.isActor) { // TODO: handle this with base entity-types
 				ent.action = {
 					queue: [], // array of actions [actionName, params] to do next
 					cooldown: 1,
 				};
 			}
+			/* eslint-enable no-param-reassign */
 		});
 		this.nextEntId = this.all.length;
 		console.log(this.all);

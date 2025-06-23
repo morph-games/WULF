@@ -8,9 +8,9 @@ import InputController from './InputController.js';
 import WorldCommunicator from './WorldCommunicator.js';
 // import WorldChunk from './WorldChunk.js';
 
-const wait = (ms) => (new Promise((resolve) => { window.setTimeout(resolve, ms); }));
+const wait = (ms) => (new Promise((resolve) => { window.setTimeout(resolve, ms); })); // eslint-disable-line
 
-function testFontDraw(gCanvas) {
+function testFontDraw(gCanvas) { // eslint-disable-line
 	const { ctx } = gCanvas;
 
 	ctx.fillStyle = '#fff';
@@ -77,9 +77,11 @@ export default class Game {
 	}
 
 	async sendWorldCommand(worldCommand) {
-		const [outcome, visibleWorld, party] = await this.worldComm.sendCommandToWorld(worldCommand, this.avatarWhoId);
-		this.visibleWorld = Object.freeze(structuredClone(visibleWorld));
-		this.party = Object.freeze(structuredClone(party));
+		const [
+			outcome, visibleWorld, party,
+		] = await this.worldComm.sendCommandToWorld(worldCommand, this.avatarWhoId);
+		if (outcome.message) this.mainConsole.print(outcome.message);
+		this.handleIncomingData({ visibleWorld, party });
 		return outcome;
 	}
 
@@ -89,13 +91,13 @@ export default class Game {
 	}
 
 	async executeCommand(commandString) {
-		const print = (text) => this.mainConsole.print(text);
 		console.log('Command:', commandString);
 		const aliases = {
 			vol: 'volume',
 		};
 		const clientOnlyCommands = {
 			volume: (direction) => {
+				console.log('volume', direction);
 				// TODO: do volume controls
 			},
 		};
@@ -109,11 +111,8 @@ export default class Game {
 			await fn(...commandParams);
 			return;
 		}
-		// Send the command to the world (server)
-		const [outcome, visibleWorld, party] = await this.worldComm.sendCommandToWorld(commandWords, this.avatarWhoId);
-		// Handle the outcome
-		if (outcome.message) print(outcome.message);
-		this.handleIncomingData({ visibleWorld, party });
+		// Send the command to the world (server), and handle the response
+		await this.sendWorldCommand(commandWords);
 	}
 
 	getMapFocusTopLeft() {
@@ -172,7 +171,6 @@ export default class Game {
 	}
 
 	handleIncomingData(data) {
-		console.log('incoming', data);
 		const { visibleWorld, party } = data;
 		this.visibleWorld = Object.freeze(structuredClone(visibleWorld));
 		this.party = Object.freeze(structuredClone(party));
@@ -203,8 +201,8 @@ export default class Game {
 
 		this.loadGame();
 
-		await this.worldComm.connect(this.avatarWhoId, this.mapDisplaySizeX, this.mapDisplaySizeY);
 		this.worldComm.on('data', (data) => this.handleIncomingData(data));
+		await this.worldComm.connect(this.avatarWhoId, this.mapDisplaySizeX, this.mapDisplaySizeY);
 		await this.sendWorldCommand('ping', this.avatarWhoId); // needed to load the map
 
 		this.drawMap();

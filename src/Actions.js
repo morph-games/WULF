@@ -19,8 +19,21 @@ function cast(actor, map, mapEnts) {
 	return [false, 'Not yet implemented.'];
 }
 
-function enter(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+// TODO: Should engage logic happen on client side or world side?
+function engage(actor, map, mapEnts) {
+	// Enter or talk
+	// TODO: Determine if this should be entering or talking
+	return this.enter(actor, map, mapEnts);
+}
+
+function enter(actor, map) {
+	const enterValue = map.getTopProperty('enter', actor.x, actor.y);
+	if (!enterValue) {
+		const [successfulClimb, message] = this.klimb(actor, map);
+		if (successfulClimb) return [true, message];
+		return [false, 'There is nothing to enter.'];
+	}
+	return [true, `You enter ${map.getName()}.`, ['moveActorMap', actor, enterValue]];
 }
 
 function dismount(actor, map, mapEnts) {
@@ -67,8 +80,21 @@ function jimmy(actor, map, mapEnts) {
 	return [false, 'Not yet implemented.'];
 }
 
-function klimb(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+function klimb(actor, map, mapEnts, direction) {
+	const klimbDirection = map.getTopProperty('klimb', actor.x, actor.y);
+	if (!klimbDirection) {
+		return [false, 'There is nothing to climb here.'];
+	}
+	if (direction && klimbDirection !== direction) {
+		return [false, `Cannot climb ${direction} here.`];
+	}
+	const exitValue = map.getExit(klimbDirection);
+	if (!exitValue) {
+		return [false, 'Cannot exit the area.'];
+	}
+	// this.moveActorMap(who, exitValue, true);
+	const isRelativeCoords = true;
+	return [true, `You climb ${klimbDirection}.`, ['moveActorMap', actor, exitValue, isRelativeCoords]];
 }
 
 function launch(actor, map, mapEnts) {
@@ -92,6 +118,8 @@ function move(actor, map, mapEnts, direction) {
 	const newY = actor.y + directionCoordinates[1];
 	const edge = map.getOffEdge(newX, newY);
 	if (!edge) {
+		// TODO: Check if map has blocking areas
+		// TODO: check if map has rough terrain that has a higher cooldown
 		actor.x = newX;
 		actor.y = newY;
 		return [true, `You move ${direction}`];
@@ -181,6 +209,7 @@ const actions = {
 	board,
 	camp,
 	cast,
+	engage,
 	enter,
 	dismount,
 	fight,
@@ -218,7 +247,7 @@ const actionNames = Object.keys(actions);
 
 function getWarmupTime(actionName) {
 	// TODO: base this on some config
-	return 2;
+	return 0;
 }
 
 function getCooldownTime(actionName, actionParamsString) {
@@ -261,7 +290,7 @@ export default class Actions {
 		}
 		const { action } = actor;
 		const actionArray = action.queue.shift();
-		console.log('\t\t', actionArray);
+		// console.log('\t\t', actionArray);
 		const [actionName, actionParamsString = ''] = actionArray;
 		if (!actionName) throw new Error('Missing actionName');
 		if (!actions[actionName]) throw new Error(`Invalid actionName ${actionName}`);

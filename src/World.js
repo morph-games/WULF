@@ -44,6 +44,7 @@ export default class World {
 		this.time = 100; // TODO: load from disk
 		// eslint-disable-next-line no-param-reassign
 		this.maps.forEach((map) => { map.time = 100; }); // TODO: load from disk
+		this.updateAllClients();
 	}
 
 	// Connection-related
@@ -224,11 +225,11 @@ export default class World {
 			// Keep simulating the map until we catch up with world time, or we are asked to stop
 			let stop = false;
 			while (map.time < this.time && !stop) {
-				stop = await this.simMap(mapId, tStep);
+				stop = await this.simMap(mapId, tStep); // eslint-disable-line no-await-in-loop
 			}
 			if (stop) stops += 1;
 		}
-		console.log('world sim stops:', stops);
+		// console.log('world sim stops:', stops);
 		if (stops) {
 			this.updateAllClients();
 		} else {
@@ -240,7 +241,7 @@ export default class World {
 	async simMap(mapId, tStep) {
 		const map = this.getMap(mapId);
 		map.time = Math.min(this.time, map.time + tStep);
-		console.log('\tMap', mapId, 'sim', map.time);
+		// console.log('\tMap', mapId, 'sim', map.time);
 
 		const actors = this.ents.getActorsOnMap(mapId);
 		if (!this.schedulerQueues[mapId]) {
@@ -271,6 +272,7 @@ export default class World {
 	// Perform secondary actions
 
 	moveActorMap(who, exitArray = [], isRelativeCoords = false) {
+		/* eslint-disable no-param-reassign */
 		const [mapName, x, y] = exitArray;
 		const newMap = this.getMap(mapName);
 		who.mapId = newMap.id;
@@ -291,83 +293,10 @@ export default class World {
 			who.x = entranceX;
 			who.y = entranceY;
 		}
+		/* eslint-enable no-param-reassign */
 	}
 
 	// Commands
-	/* eslint-disable class-methods-use-this, no-param-reassign */
-
-	engage(who, direction) {
-		// Enter or talk
-		// TODO: Determine if this should be entering or talking
-		return this.enter(who);
-	}
-
-	enter(who) {
-		const map = this.getMap(who.mapId);
-		const enterValue = map.getTopProperty('enter', who.x, who.y);
-		if (!enterValue) {
-			const [successfulClimb, message] = this.klimb(who);
-			if (successfulClimb) return [true, message];
-			return [false, 'There is nothing to enter.'];
-		}
-		this.moveActorMap(who, enterValue);
-		return [true, `You enter ${map.getName()}.`];
-	}
-
-	klimb(who, direction) {
-		const map = this.getMap(who.mapId);
-		const klimbDirection = map.getTopProperty('klimb', who.x, who.y);
-		if (!klimbDirection) {
-			return [false, 'There is nothing to climb here.'];
-		}
-		if (direction && klimbDirection !== direction) {
-			return [false, `Cannot climb ${direction} here.`];
-		}
-		const exitValue = map.getExit(klimbDirection);
-		if (!exitValue) {
-			return [false, 'Cannot exit the area.'];
-		}
-		this.moveActorMap(who, exitValue, true);
-		return [true, `You climb ${klimbDirection}.`];
-	}
-
-	move1(who, direction) {
-		// TODO: add time cost
-		const coordinateMap = {
-			up: [0, -1],
-			down: [0, 1],
-			left: [-1, 0],
-			right: [1, 0],
-		};
-		const coordinates = coordinateMap[direction];
-		if (!coordinates) {
-			return [false, 'Invalid direction to move'];
-		}
-		const newX = who.x + coordinates[0];
-		const newY = who.y + coordinates[1];
-		const map = this.getMap(who.mapId);
-		const edge = map.getOffEdge(newX, newY);
-		if (!edge) {
-			who.x = newX;
-			who.y = newY;
-			return [true, `You move ${direction}`];
-		}
-		const exitValue = map.getExit(edge);
-		if (exitValue instanceof Array) {
-			this.moveActorMap(who, exitValue);
-			return [true, 'You leave.'];
-		}
-		if (exitValue === 'BLOCK') {
-			return [false, `Blocked ${direction}.`];
-		}
-		if (exitValue === 'LOOP') {
-			const [x, y] = map.getLoopedCoordinates(newX, newY);
-			who.x = x;
-			who.y = y;
-			return [true, `You move ${direction}`];
-		}
-		return [false, 'You cannot move.'];
-	}
 
 	ping() { return [true, 'ping']; } // eslint-disable-line class-methods-use-this
 
@@ -400,13 +329,13 @@ export default class World {
 		const ALLOWED_WORLD_COMMANDS = [
 			'chat',
 			'descend', // alias for klimb down
-			'engage', // enter or talk
 			'exit', // alias for dismount
 			'karma', // get karma score?
 			'look', // (direction)
 			'map',
 			'navigate', // but maybe add cooldown time?
 			'party', // but maybe add cooldown time?
+			'ping',
 			'quicksave',
 			'quit',
 			'view', // (?)
