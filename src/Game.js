@@ -2,11 +2,9 @@ import TextController from './TextController.js';
 import GameCanvas from './GameCanvas.js';
 import GameConsole from './GameConsole.js';
 import GameStorage from './GameStorage.js';
-import World from './World.js';
 import SpriteSheet from './Spritesheet.js';
 import InputController from './InputController.js';
 import WorldCommunicator from './WorldCommunicator.js';
-// import WorldChunk from './WorldChunk.js';
 
 const wait = (ms) => (new Promise((resolve) => { window.setTimeout(resolve, ms); })); // eslint-disable-line
 
@@ -38,7 +36,6 @@ export default class Game {
 		this.mainCanvasId = options.screen?.mainCanvasId || 'wulf-main-canvas';
 		this.gameCanvas = new GameCanvas(this.mainCanvasId, [this.screenWidth, this.screenHeight]);
 		this.gameStorage = new GameStorage(options.gameName || 'WULF');
-		this.world = new World(options.world || {});
 		this.worldComm = new WorldCommunicator(options.world || {});
 		this.ss = new SpriteSheet(options?.spritesheets?.main);
 		this.fontsSpritesheet = new SpriteSheet(options?.spritesheets?.fonts);

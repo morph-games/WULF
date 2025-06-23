@@ -1,28 +1,18 @@
 export default class EntityManager {
-	constructor(maps) {
-		this.all = maps.reduce((arr, map) => ([...arr, ...map.getEntities()]), []);
-		this.all.forEach((ent, i) => {
-			/* eslint-disable no-param-reassign */
-			ent.entId = i;
-			// FIXME
-			if (ent.isActor) { // TODO: handle this with base entity-types
-				ent.action = {
-					queue: [], // array of actions [actionName, params] to do next
-					cooldown: 1,
-				};
-			}
-			/* eslint-enable no-param-reassign */
-		});
+	constructor(entityTypes) {
+		this.entityTypes = entityTypes;
+		this.all = []; // maps.reduce((arr, map) => ([...arr, ...map.getEntities()]), []);
 		this.nextEntId = this.all.length;
-		console.log(this.all);
 	}
 
 	add(entObj = {}) {
+		const extendedEnt = this.entityTypes.getExtendedType(entObj);
 		this.all.push({
 			x: 0,
 			y: 0,
+			location: { x: 0, y: 0 },
+			...structuredClone(extendedEnt),
 			entId: this.nextEntId,
-			...structuredClone(entObj),
 		});
 		this.nextEntId += 1;
 	}
@@ -34,15 +24,21 @@ export default class EntityManager {
 			...obj,
 			whoId,
 			isActor: true,
-			action: {
-				queue: [], // array of actions [actionName, params] to do next
-				cooldown: 1,
-			},
 		});
 	}
 
 	addAvatar(obj) {
-		this.addActor({ ...obj, isAvatar: true });
+		this.addActor({ ...obj, type: 'avatar', isAvatar: true });
+	}
+
+	allAllFromMaps(maps) {
+		const allEntsFromMaps = maps.reduce((arr, map) => ([...arr, ...map.getEntities()]), []);
+		allEntsFromMaps.forEach((ent) => {
+			const extendedEnt = this.entityTypes.getExtendedType(ent);
+			if (extendedEnt.isActor) this.addActor(extendedEnt);
+			else this.add(extendedEnt);
+		});
+		console.log('All Entities', this.all);
 	}
 
 	getActor(whoId) {
@@ -51,6 +47,10 @@ export default class EntityManager {
 
 	getAvatars() {
 		return this.all.filter((ent) => ent.isAvatar);
+	}
+
+	getActors() {
+		return this.all.filter((ent) => ent.isActor);
 	}
 
 	getAvatarMapIds() {

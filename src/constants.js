@@ -8,8 +8,10 @@ const COORDINATE_MAP = {
 	left: [-1, 0],
 	right: [1, 0],
 };
+const BASE_COOLDOWN = 20;
 
 export {
+	BASE_COOLDOWN,
 	COORDINATE_MAP,
 	SCREEN_HEIGHT,
 	SCREEN_WIDTH,

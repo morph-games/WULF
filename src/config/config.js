@@ -21,71 +21,6 @@ export default {
 	},
 	world: {
 		entityTypes,
-		terrainTypes: {
-			void: { sprite: 'void' },
-			dirt: { sprite: 'dirt' },
-			grass: {
-				sprite: 'grass-0',
-				// variations: 4,
-			},
-			water: {
-				sprite: 'water',
-				variations: 2,
-			},
-			forest: {
-				sprite: 'forest-0',
-				// variations: 4,
-			},
-			mountain: {
-				sprite: 'mountain-0',
-				// variations: 4,
-			},
-			wall: {
-				sprite: 'stone-wall-0',
-			},
-			door: {
-				sprite: 'stone-door-open',
-			},
-			window: {
-				sprite: 'stone-window',
-			},
-			floor: {
-				sprite: 'floor-0',
-				// variations: 2,
-			},
-			tileFloor: {
-				sprite: 'floor-2',
-			},
-			signLeft: { sprite: 'stone-sign-left' },
-			signRight: { sprite: 'stone-sign-right' },
-		},
-		propTypes: {
-			town: {
-				sprite: 'town',
-			},
-			city: {
-				sprite: 'city',
-				investigate: 'You see the city of {{name}}.',
-			},
-			village: {
-				sprite: 'village',
-			},
-			dungeon: {
-				sprite: 'mountain-door',
-			},
-
-			ladderDown: { sprite: 'ladder-down', klimb: 'down' },
-			ladderUp: { sprite: 'ladder-up', klimb: 'up' },
-		},
-		itemTypes: {},
-		actorTypes: {
-			king: {
-				sprite: 'king-0',
-			},
-			guard: {
-				sprite: 'spearman-2',
-			},
-		},
 		maps: {
 			overworld,
 			castle1,
@@ -253,5 +188,44 @@ export default {
 				z: 'ztats', // Show stats (statistics and inventory)
 			},
 		},
+	},
+	actions: {
+		board: { cooldown: 1 },
+		camp: { cooldown: 2 },
+		cast: { cooldown: 1 },
+		engage: { cooldown: 0 },
+		enter: { cooldown: 1 },
+		dismount: { cooldown: 0.6 },
+		fight: { cooldown: 1 },
+		fire: { cooldown: 1 },
+		get: { cooldown: 0.6 },
+		heal: { cooldown: 2 },
+		hyperjump: { cooldown: 0.1 },
+		ignite: { cooldown: 0.6 },
+		investigate: { cooldown: 2 },
+		junk: { cooldown: 0.8 },
+		jump: { cooldown: 0.1 },
+		jimmy: { cooldown: 2 },
+		klimb: { cooldown: 1, warmup: 0.9 },
+		launch: { cooldown: 0.1 },
+		locate: { cooldown: 0.1 },
+		mix: { cooldown: 3 },
+		move: { cooldown: 1 },
+		navigate: { cooldown: 3 },
+		negate: { cooldown: 0.9 },
+		open: { cooldown: 0.5 },
+		offer: { cooldown: 1 },
+		pass: { cooldown: 1 },
+		pickpocket: { cooldown: 0.5, warmup: 2 },
+		peer: { cooldown: 1 },
+		plan: { cooldown: 1 },
+		push: { cooldown: 1 },
+		ready: { cooldown: 0.9 },
+		summon: { cooldown: 1 },
+		talk: { cooldown: 1 },
+		transact: { cooldown: 2 },
+		unlock: { cooldown: 2 },
+		warmup: { cooldown: 0.6 },
+		yell: { cooldown: 0.1 },
 	},
 };

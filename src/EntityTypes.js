@@ -1,40 +1,56 @@
 export default class EntityTypes {
-	constructor(terrainTypes, propTypes, itemTypes, actorTypes) {
-		this.terrainTypes = terrainTypes || {};
-		this.propTypes = propTypes || {};
-		this.itemTypes = itemTypes || {};
-		this.actorTypes = actorTypes || {};
+	constructor(entityTypesConfig) {
+		// this.entityTypesConfig = entityTypesConfig || {};
 		this.allTypes = {};
 		this.allTypesArray = [];
-		this.buildAllTypes();
+		this.buildAllTypes(entityTypesConfig);
 	}
 
-	buildAllTypes() {
+	static getExtendedType(obj = {}, allTypes = {}) {
+		let extendedObj = obj;
+		if (obj.type) {
+			if (allTypes[obj.type]) {
+				extendedObj = {
+					...EntityTypes.getExtendedType(allTypes[obj.type], allTypes),
+					...extendedObj,
+				};
+			} else {
+				console.error('Could not find type', obj.type);
+			}
+		}
+		return structuredClone(extendedObj);
+	}
+
+	getExtendedType(obj = {}) {
+		return EntityTypes.getExtendedType(obj, this.allTypes);
+	}
+
+	buildAllTypes(entityTypesConfig) {
 		this.allTypes = {};
 		this.allTypesArray = [];
-		const addTypes = (types, coreType, isCoreKey) => {
-			const typeKeys = Object.keys(types).sort();
-			typeKeys.forEach((typeKey) => {
-				const typeObj = types[typeKey];
-				if (this.allTypesArray[typeKey]) {
-					console.error('Type', typeKey, 'already exists and will be skipped.');
-					return;
-				}
-				this.allTypes[typeKey] = typeObj;
-				this.allTypesArray.push(typeObj);
-				if (typeObj.typeKey && typeObj.typeKey !== typeKey) {
-					console.warn('Existing typeKey does not match', typeKey, 'and will be overwritten');
-				}
-				typeObj.id = this.allTypesArray.length - 1;
-				typeObj.typeKey = typeKey;
-				typeObj.coreType = coreType;
-				typeObj[isCoreKey] = true;
-			});
-		};
-		addTypes(this.terrainTypes, 'terrain', 'isTerrain');
-		addTypes(this.propTypes, 'prop', 'isProp');
-		addTypes(this.itemTypes, 'item', 'isItem');
-		addTypes(this.actorTypes, 'actor', 'isActor');
+		const typeKeys = Object.keys(entityTypesConfig).sort();
+		typeKeys.forEach((typeKey) => {
+			const typeObj = entityTypesConfig[typeKey];
+			if (this.allTypesArray[typeKey]) {
+				console.error('Type', typeKey, 'already exists and will be skipped.');
+				return;
+			}
+			this.allTypes[typeKey] = typeObj;
+			this.allTypesArray.push(typeObj);
+			if (typeObj.typeKey && typeObj.typeKey !== typeKey) {
+				console.warn('Existing typeKey does not match', typeKey, 'and will be overwritten');
+			}
+			typeObj.entTypeId = this.allTypesArray.length - 1;
+			typeObj.typeKey = typeKey;
+		});
+		this.allTypesArray.forEach((typeObj) => {
+			const extendedTypeObj = EntityTypes.getExtendedType(typeObj, this.allTypes);
+			this.allTypes[extendedTypeObj.typeKey] = extendedTypeObj;
+			this.allTypesArray[extendedTypeObj.entTypeId] = extendedTypeObj;
+		});
+		this.allTypesArray.forEach((typeObj) => {
+			if (!typeObj.name) typeObj.name = typeObj.typeKey; // eslint-disable-line no-param-reassign
+		});
 	}
 
 	get(typeKey) {
@@ -56,8 +72,8 @@ export default class EntityTypes {
 		return s;
 	}
 
-	getPropSpriteName(propKey) {
-		const terrObj = this.get(propKey);
+	getEntitySpriteName(entKey) {
+		const terrObj = this.get(entKey);
 		if (!terrObj) return '';
 		const { sprite, variations } = terrObj;
 		if (!variations) return sprite;

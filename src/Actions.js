@@ -1,9 +1,9 @@
-import { COORDINATE_MAP } from './constants.js';
+import { BASE_COOLDOWN, COORDINATE_MAP } from './constants.js';
 // Actions are essentially ECS Systems
 // They are things that most actors can do, and they
 // effect the world (the map) and the entities there.
 
-/* eslint-disable no-param-reassign */
+/* eslint-disable no-param-reassign, no-unused-vars */
 
 // Primary Actions
 
@@ -33,7 +33,12 @@ function enter(actor, map) {
 		if (successfulClimb) return [true, message];
 		return [false, 'There is nothing to enter.'];
 	}
-	return [true, `You enter ${map.getName()}.`, ['moveActorMap', actor, enterValue]];
+	if (!actor.canEnter) return [false, 'You cannot enter.'];
+	return {
+		success: true,
+		message: `You enter ${map.getName()}.`,
+		followUp: ['moveActorMap', actor, enterValue],
+	};
 }
 
 function dismount(actor, map, mapEnts) {
@@ -94,7 +99,11 @@ function klimb(actor, map, mapEnts, direction) {
 	}
 	// this.moveActorMap(who, exitValue, true);
 	const isRelativeCoords = true;
-	return [true, `You climb ${klimbDirection}.`, ['moveActorMap', actor, exitValue, isRelativeCoords]];
+	return {
+		success: true,
+		message: `You climb ${klimbDirection}.`,
+		followUp: ['moveActorMap', actor, exitValue, isRelativeCoords],
+	};
 }
 
 function launch(actor, map, mapEnts) {
@@ -110,7 +119,7 @@ function mix(actor, map, mapEnts, what) {
 }
 
 function move(actor, map, mapEnts, direction) {
-	const directionCoordinates = [...COORDINATE_MAP[direction]];
+	const directionCoordinates = COORDINATE_MAP[direction];
 	if (!directionCoordinates) {
 		return [false, 'Invalid direction to move'];
 	}
@@ -122,12 +131,19 @@ function move(actor, map, mapEnts, direction) {
 		// TODO: check if map has rough terrain that has a higher cooldown
 		actor.x = newX;
 		actor.y = newY;
-		return [true, `You move ${direction}`];
+		const cooldownMultiplier = 1;
+		return {
+			success: true,
+			message: `You move ${direction}`,
+			cooldownMultiplier,
+		};
 	}
+	// Handle off the edge
+	if (!actor.canExit) return [false, 'You cannot exit.'];
 	const exitValue = map.getExit(edge);
 	if (exitValue instanceof Array) {
 		// this.moveActorMap(actor, exitValue);
-		return [true, 'You leave.', ['moveActorMap', actor, exitValue]];
+		return { success: true, message: 'You leave.', followUp: ['moveActorMap', actor, exitValue] };
 	}
 	if (exitValue === 'BLOCK') {
 		return [false, `Blocked ${direction}.`];
@@ -154,9 +170,13 @@ function open(actor, map, mapEnts, direction) {
 	return [false, 'Not yet implemented.'];
 }
 
-function offer(actor, map, mapEnts) { 
+function offer(actor, map, mapEnts) {
 	// for a bribe or payment
 	return [false, 'Not yet implemented.'];
+}
+
+function pass() { // pass time -- eat?
+	return [true, 'You wait a moment.'];
 }
 
 function pickpocket(actor, map, mapEnts, direction) {
@@ -168,7 +188,19 @@ function peer(actor, map, mapEnts) {
 }
 
 function plan(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	if (!actor.plan) {
+		Actions.enqueue(actor, 'pass');
+		return [false, 'No thinking.'];
+	}
+	const { randomMove = 0.5 } = actor.plan;
+	if (Math.random() < randomMove) {
+		const dir = ['up', 'down', 'left', 'right'];
+		const i = Math.floor(Math.random() * 4) + 1;
+		Actions.enqueue(actor, 'move', dir[i]);
+	} else {
+		Actions.enqueue(actor, 'pass');
+	}
+	return [true, ''];
 }
 
 function push(actor, map, mapEnts, direction) {
@@ -231,6 +263,7 @@ const actions = {
 	negate,
 	open,
 	offer,
+	pass,
 	pickpocket,
 	peer,
 	plan,
@@ -255,7 +288,7 @@ function getCooldownTime(actionName, actionParamsString) {
 		return getWarmupTime(actionParamsString);
 	}
 	// TODO: base this on some config
-	return 20;
+	return BASE_COOLDOWN;
 }
 
 export default class Actions {
@@ -295,11 +328,16 @@ export default class Actions {
 		if (!actionName) throw new Error('Missing actionName');
 		if (!actions[actionName]) throw new Error(`Invalid actionName ${actionName}`);
 		const result = actions[actionName](actor, map, mapEnts, actionParamsString);
-		const [success] = result;
+		let { success, message } = result;
+		const { followUp, cooldownMultiplier } = result;
+		if (result instanceof Array) {
+			[success, message] = result;
+		}
 		if (success) {
 			action.cooldown += getCooldownTime(actionName, actionParamsString);
 		}
-		return result;
+		// console.log(actor.entId, actor, result);
+		return [success, message, followUp];
 	}
 
 	static cool(actor, timeNow) {

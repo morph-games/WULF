@@ -9,12 +9,7 @@ const wait = (t) => new Promise((resolve) => { setTimeout(resolve, t); });
 export default class World {
 	constructor(worldOptions = {}, worldComm = null) {
 		this.worldComm = worldComm;
-		this.entityTypes = new EntityTypes(
-			worldOptions?.terrainTypes,
-			worldOptions?.propTypes,
-			worldOptions?.itemTypes,
-			worldOptions?.actorTypes,
-		);
+		this.entityTypes = new EntityTypes(worldOptions?.entityTypes);
 		this.time = 0;
 		this.maps = WorldMap.makeMaps(worldOptions?.maps || {});
 		// const overworldMapId = this.maps.findIndex((map) => map.mapKey === 'overworld');
@@ -22,28 +17,29 @@ export default class World {
 		// this.props = [];
 		// this.items = [];
 		this.connections = {};
-		this.ents = new EntityManager(this.maps);
+		this.ents = new EntityManager(this.entityTypes);
 		this.schedulerQueues = {}; // Add objects keyed off the maps
 		this.worldLog = [];
 		this.deltas = [];
+		this.ents.allAllFromMaps(this.maps);
 	}
 
 	async load() {
 		const overworldMapId = this.maps.findIndex((map) => map.mapKey === 'overworld');
 		this.ents.addAvatar({
+			type: 'avatar',
 			whoId: 'my-avatar-1',
 			mapId: overworldMapId,
-			// mapName: 'overworld',
-			x: 5,
+			x: 10,
 			y: 5,
-			sprite: 'spearman-0',
-			health: 99,
 			stats: {}, // TODO
-			mountId: null,
 		});
 		this.time = 100; // TODO: load from disk
 		// eslint-disable-next-line no-param-reassign
-		this.maps.forEach((map) => { map.time = 100; }); // TODO: load from disk
+		this.maps.forEach((map) => { map.time = this.time; }); // TODO: load from disk
+		this.ents.getActors().forEach((actor) => { // TODO: Remove this if we load ents from disk
+			actor.action.cooldown = this.time; // eslint-disable-line no-param-reassign
+		});
 		this.updateAllClients();
 	}
 
@@ -91,9 +87,11 @@ export default class World {
 		return s;
 	}
 
-	getPropSpriteAt(map, x, y) {
-		const typeKey = map.getTopEntityType(x, y);
-		return this.entityTypes.getPropSpriteName(typeKey);
+	// FIXME: Do this different - this is very inefficient
+	getEntitySpriteAt(map, x, y) {
+		const mapEnts = this.ents.getEntitiesOnMap(map.id);
+		const entHere = mapEnts.find((ent) => ent.x === x && ent.y === y);
+		return (entHere) ? entHere.sprite : '';
 	}
 
 	getTerrainSprites(mapId, startX = 0, startY = 0, w = 10, h = 10) {
@@ -110,13 +108,13 @@ export default class World {
 	getPropsSprites(mapId, startX = 0, startY = 0, w = 10, h = 10) {
 		const map = this.getMap(mapId);
 		const sprites = [];
+		// const ents = this.ents.getEntitiesOnMap(mapId);
 		for (let y = 0; y < h; y += 1) {
 			if (!sprites[y]) sprites[y] = [];
 			for (let x = 0; x < w; x += 1) {
-				sprites[y][x] = this.getPropSpriteAt(map, startX + x, startY + y);
+				sprites[y][x] = this.getEntitySpriteAt(map, startX + x, startY + y);
 			}
 		}
-		// console.log(sprites);
 		return sprites;
 	}
 
@@ -256,8 +254,7 @@ export default class World {
 				console.log('\tTop actor is avatar and has nothing to do.', topActor);
 				return true;
 			}
-			// TODO: Do thinking then enqueue
-			Actions.enqueue(topActor, 'move', 'left');
+			Actions.enqueue(topActor, 'plan');
 		}
 		const delta = await this.performAction(topActor, map.time);
 		if (!delta) return false; // Didn't do anything - just leave
