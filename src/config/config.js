@@ -5,6 +5,7 @@ import overworld from './maps/overworld.js';
 import castle1 from './maps/castle1.js';
 import castle1B from './maps/castle1B.js';
 
+/* eslint-disable quote-props */
 export default {
 	spritesheets,
 	screen: {
@@ -25,6 +26,15 @@ export default {
 			overworld,
 			castle1,
 			castle1B,
+		},
+		globalLegend: {
+			'.': ['grass'],
+			':': ['dirt'],
+			'~': ['water'],
+			'^': ['mountain'],
+			'f': ['forest'],
+			'-': ['floor'],
+			'#': ['wall'],
 		},
 	},
 	stats: {

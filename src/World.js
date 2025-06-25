@@ -11,7 +11,7 @@ export default class World {
 		this.worldComm = worldComm;
 		this.entityTypes = new EntityTypes(worldOptions?.entityTypes);
 		this.time = 0;
-		this.maps = WorldMap.makeMaps(worldOptions?.maps || {});
+		this.maps = WorldMap.makeMaps(worldOptions?.maps || {}, worldOptions?.globalLegend);
 		// const overworldMapId = this.maps.findIndex((map) => map.mapKey === 'overworld');
 		// this.actors = [];
 		// this.props = [];

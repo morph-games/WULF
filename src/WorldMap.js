@@ -14,12 +14,12 @@ export default class WorldMap {
 	}
 
 	/** Make an array of world maps (alphabetized) */
-	static makeMaps(objectOfManyMaps = {}) {
+	static makeMaps(objectOfManyMaps = {}, globalLegend = {}) {
 		const maps = [];
 		const manyMapKeys = Object.keys(objectOfManyMaps).sort();
 		manyMapKeys.forEach((mapKey) => {
 			const id = maps.length;
-			const map = new WorldMap({ ...objectOfManyMaps[mapKey], mapKey, id });
+			const map = new WorldMap({ ...objectOfManyMaps[mapKey], mapKey, id }, globalLegend);
 			maps.push(map);
 		});
 		return maps;
@@ -39,14 +39,13 @@ export default class WorldMap {
 	getEntities() {
 		const mapId = this.id;
 		const { map, legend } = this.getData();
-		const comboLegend = { ...this.globalLegend, ...legend };
 		// Anything in the legend item's array with more than 1 string is an entity;
 		// if only one, then it is terrain-only (not currently considered an entity)
-		const entityCharacters = Object.keys(comboLegend)
-			.filter((letter) => comboLegend[letter].length > 1);
+		const entityCharacters = Object.keys(legend)
+			.filter((letter) => legend[letter].length > 1);
 		// Build a legend with only the entities
 		const entityTypes = entityCharacters.reduce((obj, letter) => {
-			const arrOfTypes = comboLegend[letter].slice(1)
+			const arrOfTypes = legend[letter].slice(1)
 				.map((arrItem) => ((typeof arrItem === 'string') ? { type: arrItem } : arrItem));
 			return {
 				...obj,
@@ -90,7 +89,8 @@ export default class WorldMap {
 	}
 
 	getData() {
-		return this.base;
+		const legend = { ...this.globalLegend, ...this.base.legend };
+		return { ...this.base, legend };
 		// TODO: Extend this with changes that have happened
 	}
 

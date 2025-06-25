@@ -5,6 +5,17 @@ import { BASE_COOLDOWN, COORDINATE_MAP } from './constants.js';
 
 /* eslint-disable no-param-reassign, no-unused-vars */
 
+// Utilities
+
+function parseActionResult(result) {
+	let { success = null, message = '' } = result;
+	const { followUp = null, cooldownMultiplier = 1 } = result;
+	if (result instanceof Array) {
+		[success, message] = result;
+	}
+	return { success, message, followUp, cooldownMultiplier };
+}
+
 // Primary Actions
 
 function board(actor, map, mapEnts) {
@@ -29,8 +40,9 @@ function engage(actor, map, mapEnts) {
 function enter(actor, map) {
 	const enterValue = map.getTopProperty('enter', actor.x, actor.y);
 	if (!enterValue) {
-		const [successfulClimb, message] = this.klimb(actor, map);
-		if (successfulClimb) return [true, message];
+		const klimbResult = this.klimb(actor, map);
+		const { success } = parseActionResult(klimbResult);
+		if (success) return klimbResult;
 		return [false, 'There is nothing to enter.'];
 	}
 	if (!actor.canEnter) return [false, 'You cannot enter.'];
@@ -328,11 +340,7 @@ export default class Actions {
 		if (!actionName) throw new Error('Missing actionName');
 		if (!actions[actionName]) throw new Error(`Invalid actionName ${actionName}`);
 		const result = actions[actionName](actor, map, mapEnts, actionParamsString);
-		let { success, message } = result;
-		const { followUp, cooldownMultiplier } = result;
-		if (result instanceof Array) {
-			[success, message] = result;
-		}
+		const { success, message, followUp, cooldownMultiplier } = parseActionResult(result);
 		if (success) {
 			action.cooldown += getCooldownTime(actionName, actionParamsString);
 		}
