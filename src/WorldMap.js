@@ -1,9 +1,10 @@
 export default class WorldMap {
-	constructor(mapData, globalLegend = {}) {
+	constructor(mapData, globalLegend = {}, entityTypes = null) {
 		if (!mapData || typeof mapData !== 'object') throw new Error('Missing mapData object');
 		this.mapKey = mapData.mapKey;
 		this.id = mapData.id;
 		this.globalLegend = Object.freeze(structuredClone(globalLegend));
+		this.entityTypes = entityTypes;
 		this.base = Object.freeze(structuredClone(mapData));
 		this.time = 0;
 		this.exits = WorldMap.makeExits(this.base.exits);
@@ -14,12 +15,16 @@ export default class WorldMap {
 	}
 
 	/** Make an array of world maps (alphabetized) */
-	static makeMaps(objectOfManyMaps = {}, globalLegend = {}) {
+	static makeMaps(objectOfManyMaps = {}, globalLegend = {}, entityTypes = null) {
 		const maps = [];
 		const manyMapKeys = Object.keys(objectOfManyMaps).sort();
 		manyMapKeys.forEach((mapKey) => {
 			const id = maps.length;
-			const map = new WorldMap({ ...objectOfManyMaps[mapKey], mapKey, id }, globalLegend);
+			const map = new WorldMap(
+				{ ...objectOfManyMaps[mapKey], mapKey, id },
+				globalLegend,
+				entityTypes,
+			);
 			maps.push(map);
 		});
 		return maps;
@@ -155,6 +160,14 @@ export default class WorldMap {
 		if (!blockDetails) return this.getOverflowEntityType();
 		const [terrainTypeKey] = blockDetails;
 		return terrainTypeKey;
+	}
+
+	getTerrainEntity(x, y) {
+		// TODO: calculate this once and save it on this object
+		const type = this.getTerrainTypeKey(x, y);
+		const terrainEnt = this.entityTypes.getExtendedType({ type });
+		console.log(terrainEnt);
+		return terrainEnt;
 	}
 
 	getEntranceCoordinates() {

@@ -2,18 +2,18 @@ import World from './World.js';
 import Observer from './Observer.js';
 
 export default class WorldCommunicator extends Observer {
-	constructor(localWorldOptions) {
+	constructor(options = {}) {
 		super();
 		this.localWorld = null;
 		this.visibleWorldHeight = 0;
 		this.visibleWorldWidth = 0;
-		if (localWorldOptions) {
-			this.startLocalWorld(localWorldOptions);
+		if (options.world) {
+			this.startLocalWorld(options.world, options.actions);
 		}
 	}
 
-	async startLocalWorld(worldOptions) {
-		this.localWorld = new World(worldOptions, this);
+	async startLocalWorld(worldOptions, actionConfig) {
+		this.localWorld = new World(worldOptions, actionConfig, this);
 		window.world = this.localWorld;
 		// await this.localWorld.load();
 	}

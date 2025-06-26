@@ -7,11 +7,16 @@ import Actions from './Actions.js';
 const wait = (t) => new Promise((resolve) => { setTimeout(resolve, t); });
 
 export default class World {
-	constructor(worldOptions = {}, worldComm = null) {
+	constructor(worldOptions = {}, actionConfig = {}, worldComm = null) {
 		this.worldComm = worldComm;
 		this.entityTypes = new EntityTypes(worldOptions?.entityTypes);
+		this.actions = new Actions(actionConfig, worldOptions?.timing);
 		this.time = 0;
-		this.maps = WorldMap.makeMaps(worldOptions?.maps || {}, worldOptions?.globalLegend);
+		this.maps = WorldMap.makeMaps(
+			worldOptions?.maps || {},
+			worldOptions?.globalLegend,
+			this.entityTypes,
+		);
 		// const overworldMapId = this.maps.findIndex((map) => map.mapKey === 'overworld');
 		// this.actors = [];
 		// this.props = [];
@@ -198,7 +203,7 @@ export default class World {
 		}
 		const map = this.getMap(mapId);
 		const mapEnts = this.ents.getEntitiesOnMap(mapId);
-		const [success, message, followUp] = Actions.perform(who, map, mapEnts, mapTime);
+		const [success, message, followUp] = this.actions.perform(who, map, mapEnts, mapTime);
 		if (followUp) { // World methods that need to be called afterwards
 			this[followUp[0]](...followUp.slice(1));
 		}
@@ -254,7 +259,7 @@ export default class World {
 				console.log('\tTop actor is avatar and has nothing to do.', topActor);
 				return true;
 			}
-			Actions.enqueue(topActor, 'plan');
+			this.actions.enqueue(topActor, 'plan');
 		}
 		const delta = await this.performAction(topActor, map.time);
 		if (!delta) return false; // Didn't do anything - just leave
@@ -353,7 +358,7 @@ export default class World {
 
 		if (Actions.has(firstCommand)) {
 			if (!who.action) return { success: false, message: `${whoId} cannot do actions.` };
-			Actions.enqueue(who, firstCommand, commandParams.join(' '));
+			this.actions.enqueue(who, firstCommand, commandParams.join(' '));
 			this.sim();
 			return { success: true, message: 'Action queued' };
 		}

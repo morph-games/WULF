@@ -36,7 +36,7 @@ export default class Game {
 		this.mainCanvasId = options.screen?.mainCanvasId || 'wulf-main-canvas';
 		this.gameCanvas = new GameCanvas(this.mainCanvasId, [this.screenWidth, this.screenHeight]);
 		this.gameStorage = new GameStorage(options.gameName || 'WULF');
-		this.worldComm = new WorldCommunicator(options.world || {});
+		this.worldComm = new WorldCommunicator({ world: options.world, actions: options.actions });
 		this.ss = new SpriteSheet(options?.spritesheets?.main);
 		this.fontsSpritesheet = new SpriteSheet(options?.spritesheets?.fonts);
 		this.textCtrl = new TextController(this.fontsSpritesheet);

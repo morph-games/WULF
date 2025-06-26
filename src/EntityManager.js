@@ -8,9 +8,6 @@ export default class EntityManager {
 	add(entObj = {}) {
 		const extendedEnt = this.entityTypes.getExtendedType(entObj);
 		this.all.push({
-			x: 0,
-			y: 0,
-			location: { x: 0, y: 0 },
 			...structuredClone(extendedEnt),
 			entId: this.nextEntId,
 		});

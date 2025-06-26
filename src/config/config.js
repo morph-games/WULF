@@ -21,6 +21,25 @@ export default {
 		columns: (SCREEN_WIDTH / 8) - 10, // 'max',
 	},
 	world: {
+		obstacleTypes: [
+			'none', 		// 0
+			'impassable physical obstacle', // 1 - e.g., wall
+			'deep ocean',	// 2
+			'shallow water', // 3
+			'swamp',		// 4
+			'plains',		// 5
+			'path',			// 6
+			'road',			// 7
+			'desert',		// 8
+			'hills',		// 9
+			'forest',		// 10
+			'low mountains', // 11
+			'high mountains', // 12
+			'short physical obstacle', // 13 - e.g., person; can be flown over
+			'lava',			// 14
+			'magical barrier', // 15
+			'', // 16
+		],
 		entityTypes,
 		maps: {
 			overworld,
@@ -35,6 +54,15 @@ export default {
 			'f': ['forest'],
 			'-': ['floor'],
 			'#': ['wall'],
+		},
+		timing: { // How many time units do certain things cooldown after
+			actionCooldown: 20,
+			actionCooldownRandom: 4,
+			actionWarmup: 5,
+			actionWarmupRandom: 0,
+			overworldEating: 100,
+			townEating: 10000,
+			regen: 120,
 		},
 	},
 	stats: {

@@ -1,4 +1,5 @@
-import { BASE_COOLDOWN, COORDINATE_MAP } from './constants.js';
+import { DEFAULT_COOLDOWN, DEFAULT_WARMUP, COORDINATE_MAP } from './constants.js';
+import { randIntInclusive } from './utilities.js';
 // Actions are essentially ECS Systems
 // They are things that most actors can do, and they
 // effect the world (the map) and the entities there.
@@ -139,15 +140,24 @@ function move(actor, map, mapEnts, direction) {
 	const newY = actor.y + directionCoordinates[1];
 	const edge = map.getOffEdge(newX, newY);
 	if (!edge) {
-		// TODO: Check if map has blocking areas
-		// TODO: check if map has rough terrain that has a higher cooldown
+		const terrainEnt = map.getTerrainEntity(newX, newY);
+		// Get obstacle Ids for everything on the cell we want to move to
+		const obstacleIds = [
+			terrainEnt.obstacleId,
+			...mapEnts
+				.filter((ent) => ent.x === newX && ent.y === newY)
+				.map((ent) => ent.obstacleId),
+		];
+		// Get actor's transversal values for the obstacle Ids
+		const transversalValues = obstacleIds.map((obId) => actor?.move?.transversal[obId] || 0);
+		const minTransversal = Math.min(...transversalValues); // Only the lowest value matters
+		if (!minTransversal) return [false, `Blocked ${direction}.`];
 		actor.x = newX;
 		actor.y = newY;
-		const cooldownMultiplier = 1;
 		return {
 			success: true,
 			message: `You move ${direction}`,
-			cooldownMultiplier,
+			cooldownMultiplier: (1 / minTransversal),
 		};
 	}
 	// Handle off the edge
@@ -201,16 +211,16 @@ function peer(actor, map, mapEnts) {
 
 function plan(actor, map, mapEnts) {
 	if (!actor.plan) {
-		Actions.enqueue(actor, 'pass');
+		Actions.enqueueWithoutWarmup(actor, 'pass');
 		return [false, 'No thinking.'];
 	}
 	const { randomMove = 0.5 } = actor.plan;
 	if (Math.random() < randomMove) {
 		const dir = ['up', 'down', 'left', 'right'];
 		const i = Math.floor(Math.random() * 4) + 1;
-		Actions.enqueue(actor, 'move', dir[i]);
+		Actions.enqueueWithoutWarmup(actor, 'move', dir[i]);
 	} else {
-		Actions.enqueue(actor, 'pass');
+		Actions.enqueueWithoutWarmup(actor, 'pass');
 	}
 	return [true, ''];
 }
@@ -290,29 +300,23 @@ const actions = {
 };
 const actionNames = Object.keys(actions);
 
-function getWarmupTime(actionName) {
-	// TODO: base this on some config
-	return 0;
-}
-
-function getCooldownTime(actionName, actionParamsString) {
-	if (actionName === 'warmup') {
-		return getWarmupTime(actionParamsString);
-	}
-	// TODO: base this on some config
-	return BASE_COOLDOWN;
-}
-
 export default class Actions {
+	constructor(actionsConfig = {}, timingConfig = {}) {
+		this.actionsConfig = structuredClone(actionsConfig);
+		const {
+			actionCooldown = DEFAULT_COOLDOWN,
+			actionCooldownRandom = 0,
+			actionWarmup = DEFAULT_WARMUP,
+			actionWarmupRandom = 0,
+		} = timingConfig;
+		this.actionCooldown = actionCooldown;
+		this.actionCooldownRandom = actionCooldownRandom;
+		this.actionWarmup = actionWarmup;
+		this.actionWarmupRandom = actionWarmupRandom;
+	}
+
 	static has(actionName) {
 		return actionNames.includes(actionName.toLowerCase());
-	}
-
-	static enqueue(actor, actionName, actionParamsString) {
-		if (getWarmupTime(actionName)) {
-			actor.action.queue.push(['warmup', actionName]);
-		}
-		actor.action.queue.push([actionName, actionParamsString]);
 	}
 
 	static hasAction(actor) {
@@ -329,7 +333,26 @@ export default class Actions {
 		return (!Actions.hasAction(actor) && actor.action.cooldown <= timeNow);
 	}
 
-	static perform(actor, map, mapEnts, timeNow) {
+	// static cool(actor, timeNow) {
+	// const { action } = actor;
+	// if (action.cooldown < timeNow) return 0;
+	// const deltaT = action.cooldown - timeNow;
+	// action.cooldown = timeNow;
+	// return deltaT;
+	// }
+
+	static enqueueWithoutWarmup(actor, actionName, actionParamsString) {
+		actor.action.queue.push([actionName, actionParamsString]);
+	}
+
+	enqueue(actor, actionName, actionParamsString) {
+		if (this.getWarmupTime(actionName)) {
+			actor.action.queue.push(['warmup', actionName]);
+		}
+		actor.action.queue.push([actionName, actionParamsString]);
+	}
+
+	perform(actor, map, mapEnts, timeNow) {
 		if (!Actions.hasReadyAction(actor, timeNow)) {
 			return [false, 'No ready actions.'];
 		}
@@ -342,17 +365,29 @@ export default class Actions {
 		const result = actions[actionName](actor, map, mapEnts, actionParamsString);
 		const { success, message, followUp, cooldownMultiplier } = parseActionResult(result);
 		if (success) {
-			action.cooldown += getCooldownTime(actionName, actionParamsString);
+			const cd = (
+				this.getCooldownTime(actionName, actionParamsString)
+				* cooldownMultiplier
+			);
+			// console.log(actionName, cd);
+			action.cooldown += cd;
 		}
 		// console.log(actor.entId, actor, result);
 		return [success, message, followUp];
 	}
 
-	static cool(actor, timeNow) {
-		const { action } = actor;
-		if (action.cooldown < timeNow) return 0;
-		const deltaT = action.cooldown - timeNow;
-		action.cooldown = timeNow;
-		return deltaT;
+	getWarmupTime(actionName) {
+		return (this.actionsConfig[actionName]?.warmup || 0) * (
+			this.actionWarmup + randIntInclusive(this.actionWarmupRandom)
+		);
+	}
+
+	getCooldownTime(actionName, actionParamsString) {
+		if (actionName === 'warmup') {
+			return this.getWarmupTime(actionParamsString);
+		}
+		return (this.actionsConfig[actionName]?.cooldown || 0) * (
+			this.actionCooldown + randIntInclusive(this.actionCooldownRandom)
+		);
 	}
 }
