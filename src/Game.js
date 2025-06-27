@@ -1,4 +1,4 @@
-import TextController from './TextController.js';
+// import TextController from './TextController.js';
 import GameCanvas from './GameCanvas.js';
 import GameConsole from './GameConsole.js';
 import GameStorage from './GameStorage.js';
@@ -39,8 +39,9 @@ export default class Game {
 		this.worldComm = new WorldCommunicator({ world: options.world, actions: options.actions });
 		this.ss = new SpriteSheet(options?.spritesheets?.main);
 		this.fontsSpritesheet = new SpriteSheet(options?.spritesheets?.fonts);
-		this.textCtrl = new TextController(this.fontsSpritesheet);
+		// this.textCtrl = new TextController(this.fontsSpritesheet);
 		this.mainConsole = new GameConsole(options.mainConsole, this.fontsSpritesheet);
+		this.quickStatConsole = new GameConsole(options.quickStatConsole, this.fontsSpritesheet);
 		this.mapFocus = [0, 0];
 		this.mapDisplaySizeX = 20;
 		this.mapDisplaySizeY = 10;
@@ -167,6 +168,23 @@ export default class Game {
 		this.drawAvatar();
 	}
 
+	static getPrintableNumber(n, maxSize = 4) {
+		if (typeof n !== 'number') return ('?').repeat(maxSize);
+		let nStr = String(n);
+		if (nStr.length > maxSize) nStr = `${String(Math.floor(n / 1000))}k`;
+		return nStr.padStart(maxSize, ' ');
+	}
+
+	drawAll() {
+		this.drawMap();
+		this.quickStatConsole.printLines([
+			`H.P.:${Game.getPrintableNumber(this.party?.avatar?.health?.hp, 4)}`,
+			`Coin:${Game.getPrintableNumber(this.party?.avatar?.currencies?.coins, 4)}`,
+			`Food:${Game.getPrintableNumber(this.party?.avatar?.currencies?.food, 4)}`,
+			`X.P.:${Game.getPrintableNumber(this.party?.avatar?.xp?.totalXp, 4)}`,
+		]);
+	}
+
 	handleIncomingData(data) {
 		const { visibleWorld, party } = data;
 		this.visibleWorld = Object.freeze(structuredClone(visibleWorld));
@@ -175,7 +193,7 @@ export default class Game {
 		// if (outcome.message) print(outcome.message);
 		// Refocus the map on the avatar, and re-draw
 		this.refocus();
-		this.drawMap();
+		this.drawAll();
 	}
 
 	async setup() {
@@ -187,6 +205,7 @@ export default class Game {
 
 		// await this.textCtrl.setup();
 		await this.mainConsole.setup(this.gameCanvas);
+		await this.quickStatConsole.setup(this.gameCanvas);
 		// await this.world.setup();
 
 		this.mainConsole.print('A flash of red...');

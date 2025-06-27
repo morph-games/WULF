@@ -112,8 +112,12 @@ export default {
 			speed: 1,
 			transversal: [1, 0, 0, 0, 0.5, 1, 1.1, 1.2, 0.5, 0.9, 0.8, 0, 0, 0, 0],
 		},
+		health: {
+			hp: 99,
+			hpMax: 99,
+			deathSprite: 'void', // TODO
+		},
 		klimbSpeed: 1,
-		health: 99,
 		canEnter: false,
 		canExit: false,
 		obstacleId: 13,
@@ -124,6 +128,18 @@ export default {
 		sprite: 'spearman-0',
 		canEnter: true,
 		canExit: true,
+		health: {
+			hp: 99,
+			hpMax: 99,
+			respawnOnDeath: true, // TODO
+		},
+		currencies: {
+			coins: 0,
+			food: 100,
+		},
+		xp: {
+			totalXp: 0,
+		},
 	},
 	king: {
 		type: 'actor',

@@ -1,3 +1,4 @@
+import { SCREEN_WIDTH } from './constants.js';
 import TextController from './TextController.js';
 
 export default class GameConsole {
@@ -10,7 +11,7 @@ export default class GameConsole {
 		this.rows = options.rows || 4;
 		this.inputLine = (typeof options.inputLine === 'undefined') ? true : Boolean(options.inputLine);
 		this.textRows = this.rows - (this.inputLine ? 1 : 0);
-		this.cursor = options.cursor || '>';
+		this.cursor = (options.cursor || options.cursor === '') ? options.cursor : '>';
 		this.gameCanvas = options.gameCanvas; // likely null at this point
 		this.textCtrl = new TextController(fontsSpritesheet);
 		this.log = [];
@@ -23,6 +24,14 @@ export default class GameConsole {
 			// If we have any non-number, then use max number of columns
 			this.columns = Math.floor(this.gameCanvas.width / this.fontSize);
 		}
+	}
+
+	getColumnStart() {
+		if (this.horizontal === 'right') {
+			const screenWidthCols = SCREEN_WIDTH / this.fontSize;
+			return screenWidthCols - this.columns;
+		}
+		return 0;
 	}
 
 	getRowBase() {
@@ -62,7 +71,8 @@ export default class GameConsole {
 		const row = this.getRowBase() + index;
 		const { ctx } = this.gameCanvas;
 		const rightFillerCount = text.length < this.columns ? this.columns - text.length : 0;
-		this.textCtrl.drawLine(ctx, text + (' ').repeat(rightFillerCount), 0, row);
+		const col = this.getColumnStart();
+		this.textCtrl.drawLine(ctx, text + (' ').repeat(rightFillerCount), col, row);
 	}
 
 	printLines(linesArr) {

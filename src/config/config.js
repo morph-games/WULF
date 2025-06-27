@@ -5,6 +5,9 @@ import overworld from './maps/overworld.js';
 import castle1 from './maps/castle1.js';
 import castle1B from './maps/castle1B.js';
 
+const FONT_SIZE = 8;
+const SCREEN_WIDTH_LETTERS = SCREEN_WIDTH / FONT_SIZE;
+
 /* eslint-disable quote-props */
 export default {
 	spritesheets,
@@ -18,7 +21,16 @@ export default {
 		horizontal: 'left',
 		vertical: 'bottom',
 		rows: 4,
-		columns: (SCREEN_WIDTH / 8) - 10, // 'max',
+		columns: SCREEN_WIDTH_LETTERS - 10, // 'max',
+		fontSize: FONT_SIZE,
+	},
+	quickStatConsole: {
+		horizontal: 'right',
+		vertical: 'bottom',
+		rows: 4,
+		columns: 10,
+		cursor: '',
+		fontSize: FONT_SIZE,
 	},
 	world: {
 		obstacleTypes: [
