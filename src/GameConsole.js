@@ -4,14 +4,14 @@ import TextController from './TextController.js';
 export default class GameConsole {
 	constructor(options = {}, fontsSpritesheet = null) {
 		this.fontsSpritesheet = fontsSpritesheet;
-		this.horizontal = options.horizontal || 'left'; // TODO: Doesn't do anything yet
+		this.horizontal = options.horizontal || 'left';
 		this.vertical = options.vertical || 'top';
-		this.fontSize = options.fontSize || 8; // TODO: get this from options
+		this.fontSize = options.fontSize || 8;
 		this.columns = options.columns || 'max';
 		this.rows = options.rows || 4;
 		this.inputLine = (typeof options.inputLine === 'undefined') ? true : Boolean(options.inputLine);
 		this.textRows = this.rows - (this.inputLine ? 1 : 0);
-		this.cursor = (options.cursor || options.cursor === '') ? options.cursor : '>';
+		this.cursor = options.cursor || '';
 		this.gameCanvas = options.gameCanvas; // likely null at this point
 		this.textCtrl = new TextController(fontsSpritesheet);
 		this.log = [];
@@ -27,11 +27,13 @@ export default class GameConsole {
 	}
 
 	getColumnStart() {
+		const screenWidthCols = SCREEN_WIDTH / this.fontSize;
 		if (this.horizontal === 'right') {
-			const screenWidthCols = SCREEN_WIDTH / this.fontSize;
 			return screenWidthCols - this.columns;
 		}
-		return 0;
+		if (this.horizontal === 'left') return 0;
+		if (this.horizontal === 'center') return Math.floor(screenWidthCols / 2);
+		return Number(this.horizontal || 0);
 	}
 
 	getRowBase() {
@@ -39,7 +41,8 @@ export default class GameConsole {
 			const maxRows = Math.floor((this.gameCanvas?.height || 0) / this.fontSize);
 			return maxRows - this.rows;
 		}
-		return 0;
+		if (this.vertical === 'top') return 0;
+		return Number(this.vertical || 0);
 	}
 
 	getPrintableLines() {

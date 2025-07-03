@@ -5,8 +5,7 @@ import GameStorage from './GameStorage.js';
 import SpriteSheet from './Spritesheet.js';
 import InputController from './InputController.js';
 import WorldCommunicator from './WorldCommunicator.js';
-
-const wait = (ms) => (new Promise((resolve) => { window.setTimeout(resolve, ms); })); // eslint-disable-line
+import { wait, capitalizeFirst } from './utilities.js';
 
 function testFontDraw(gCanvas) { // eslint-disable-line
 	const { ctx } = gCanvas;
@@ -42,12 +41,17 @@ export default class Game {
 		// this.textCtrl = new TextController(this.fontsSpritesheet);
 		this.mainConsole = new GameConsole(options.mainConsole, this.fontsSpritesheet);
 		this.quickStatConsole = new GameConsole(options.quickStatConsole, this.fontsSpritesheet);
+		this.commandConsoles = options.commandConsoles.map((commandConsoleOptions) => {
+			return new GameConsole(commandConsoleOptions, this.fontsSpritesheet);
+		});
+		this.commandIndex = 0;
 		this.mapFocus = [0, 0];
 		this.mapDisplaySizeX = 20;
 		this.mapDisplaySizeY = 10;
 		this.visibleWorld = {};
 		this.party = {};
 		this.avatarWhoId = null;
+		this.renderWorldTime = 0; // the world time that we are rendered up to
 	}
 
 	static waitForDom() {
@@ -78,7 +82,8 @@ export default class Game {
 		const [
 			outcome, visibleWorld, party,
 		] = await this.worldComm.sendCommandToWorld(worldCommand, this.avatarWhoId);
-		if (outcome.message) this.mainConsole.print(outcome.message);
+		// if (outcome.message) this.mainConsole.print(outcome.message);
+		// TODO: Maybe keep track of the message in a log?
 		this.handleIncomingData({ visibleWorld, party });
 		return outcome;
 	}
@@ -88,8 +93,67 @@ export default class Game {
 		this.mapFocus[1] = this.party?.avatar.visibleWorldY || 0;
 	}
 
+	switchToAskDirection(commandWords) {
+		const directionIndex = commandWords.findIndex((w) => w === 'direction');
+		this.mainConsole.print(`${capitalizeFirst(commandWords[0])} Direction?`);
+		this.inputCtrl.setState('direction', (directionCommand) => {
+			if (directionCommand === 'abort') {
+				this.switchToTravel();
+				this.mainConsole.print('Cancel'); // TODO: print at end of line
+				return;
+			}
+			const directedCommandWords = [...commandWords];
+			directedCommandWords[directionIndex] = directionCommand;
+			this.mainConsole.print(capitalizeFirst(directionCommand)); // TODO: print at end of line
+			this.switchToTravel();
+			this.executeCommand(directedCommandWords.join(' '));
+		});
+	}
+
+	switchToTravel() {
+		this.drawMap();
+		this.inputCtrl.setState('travel', (command) => this.executeCommand(command));
+	}
+
+	switchTo(stateName) {
+		if (stateName === 'travel') {
+			this.switchToTravel();
+			return;
+		}
+		if (stateName === 'direction') {
+			this.switchToAskDirection();
+			return;
+		}
+		if (stateName === 'commands') {
+			this.inputCtrl.setState('commands', (command) => {
+				if (command === 'abort') {
+					this.switchTo('travel');
+					return;
+				}
+				const travelCommands = this.getStateKeyCommands('travel');
+				if (command === 'execute') {
+					this.switchTo('travel');
+					const travelCmd = travelCommands[this.commandIndex]?.command;
+					this.executeCommand(travelCmd);
+					return;
+				}
+				const n = travelCommands.length;
+				if (command === 'next') {
+					this.commandIndex = (this.commandIndex + 1) % n;
+				} else if (command === 'previous') {
+					this.commandIndex = (n + this.commandIndex - 1) % n;
+				}
+				this.drawKeyCommandsScreen('travel');
+			});
+			this.drawKeyCommandsScreen('travel');
+			return;
+		}
+		console.warn('Unknown state', stateName);
+	}
+
 	async executeCommand(commandString) {
-		console.log('Command:', commandString);
+		await wait(10); // TODO: remove eventually
+		console.log('Client Command:', commandString);
 		const aliases = {
 			vol: 'volume',
 		};
@@ -97,6 +161,11 @@ export default class Game {
 			volume: (direction) => {
 				console.log('volume', direction);
 				// TODO: do volume controls
+			},
+			switch: (stateName) => this.switchTo(stateName),
+			see: (stateName) => this.switchTo(stateName),
+			abort: () => {
+				this.switchToTravel();
 			},
 		};
 		const commandWords = String(commandString).toLowerCase().split(' ');
@@ -107,6 +176,11 @@ export default class Game {
 		if (fn) {
 			const commandParams = commandWords.slice(1);
 			await fn(...commandParams);
+			return;
+		}
+		// Check if the command needs a direction
+		if (commandWords.includes('direction')) {
+			this.switchToAskDirection(commandWords);
 			return;
 		}
 		// Send the command to the world (server), and handle the response
@@ -168,6 +242,40 @@ export default class Game {
 		this.drawAvatar();
 	}
 
+	getStateKeyCommands(stateName) {
+		const { kb = {}, hideCommands = [] } = this.states[stateName];
+		return Object.keys(kb)
+			.filter((key) => !hideCommands.includes(key))
+			.map((key) => ({ key, command: kb[key] }));
+	}
+
+	drawKeyCommandsScreen(stateName) {
+		const keyCommandsArray = this.getStateKeyCommands(stateName);
+		const KEY_REPLACEMENTS = {
+			ArrowUp: 'Up',
+			ArrowDown: 'Down',
+			ArrowLeft: 'Left',
+			ArrowRight: 'Right',
+			' ': 'Space',
+		};
+		const COMMAND_REPLACEMENTS = {
+			// 'switch commands': 'list commands',
+		};
+		const commandLines = keyCommandsArray.map(({ key, command }, i) => {
+				const keyStr = KEY_REPLACEMENTS[key] || key;
+				const cmdStr = (COMMAND_REPLACEMENTS[command] || command)
+					.replaceAll('direction', 'dir');
+				const cursor = (this.commandIndex === i) ? '>' : ' ';
+				return `${cursor}(${keyStr}) ${cmdStr}`;
+		});
+		const colNum = this.commandConsoles.length;
+		const commandsPerCol = Math.ceil(commandLines.length / colNum);
+		const col1 = commandLines.slice(0, commandsPerCol);
+		const col2 = commandLines.slice(commandsPerCol);
+		this.commandConsoles[0].printLines(col1);
+		this.commandConsoles[1].printLines(col2);
+	}
+
 	static getPrintableNumber(n, maxSize = 4) {
 		if (typeof n !== 'number') return ('?').repeat(maxSize);
 		let nStr = String(n);
@@ -185,11 +293,45 @@ export default class Game {
 		]);
 	}
 
+	/** Loop through deltas - assuming they are in worldTime order */
+	static loopDeltas(deltas = [], fromWorldTime = 0, toWorldTime = 0, fn = () => {}) {
+		let delta;
+		for (let i = deltas.length - 1; i >= 0; i -= 1) {
+			delta = deltas[i];
+			if (delta.worldTime < fromWorldTime) return;
+			if (delta.worldTime <= toWorldTime) {
+				const discontinueLoop = fn(delta);
+				if (discontinueLoop) return;
+			}
+		}
+	}
+
+	drawDeltas(deltas = [], fromWorldTime = 0, toWorldTime = 0) {
+		const messagesBackwards = [];
+		Game.loopDeltas(deltas, fromWorldTime, toWorldTime, (delta) => {
+			if (this.renderWorldTime < delta.worldTime) {
+				if (delta.whoId === this.avatarWhoId) {
+					messagesBackwards.push(delta.message);
+				}
+			}
+		});
+		for (let i = messagesBackwards.length - 1; i >= 0; i -= 1) {
+			this.mainConsole.print(messagesBackwards[i]);
+		}
+	}
+
 	handleIncomingData(data) {
-		const { visibleWorld, party } = data;
+		const { visibleWorld, party, deltas } = data;
 		this.visibleWorld = Object.freeze(structuredClone(visibleWorld));
 		this.party = Object.freeze(structuredClone(party));
-		// Handle the outcome
+		// console.log(data);
+		if (deltas) {
+			const startWorldTime = this.renderWorldTime;
+			const endWorldTime = deltas[deltas.length - 1]?.worldTime || 0;
+			// Handle the outcome
+			this.drawDeltas(deltas, startWorldTime, endWorldTime);
+			this.renderWorldTime = endWorldTime;
+		}
 		// if (outcome.message) print(outcome.message);
 		// Refocus the map on the avatar, and re-draw
 		this.refocus();
@@ -206,7 +348,11 @@ export default class Game {
 		// await this.textCtrl.setup();
 		await this.mainConsole.setup(this.gameCanvas);
 		await this.quickStatConsole.setup(this.gameCanvas);
-		// await this.world.setup();
+		const setupPromises = this.commandConsoles.map((console) => {
+			return console.setup(this.gameCanvas);
+		});
+		await Promise.allSettled(setupPromises);
+		this.inputCtrl.setup();
 
 		this.mainConsole.print('A flash of red...');
 		// await wait(1000);
@@ -222,10 +368,7 @@ export default class Game {
 		await this.sendWorldCommand('ping', this.avatarWhoId); // needed to load the map
 
 		this.drawMap();
-
-		this.inputCtrl.on('command', (command) => this.executeCommand(command));
-		this.inputCtrl.on('missingCommand', (...args) => console.warn('Missing command', args));
-		this.inputCtrl.setState('travel');
+		this.switchToTravel();
 	}
 
 	async start() {

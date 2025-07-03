@@ -6,7 +6,7 @@ import { randIntInclusive } from './utilities.js';
 
 /* eslint-disable no-param-reassign, no-unused-vars */
 
-// Utilities
+// Utilities / Secondary Actions
 
 function parseActionResult(result) {
 	let { success = null, message = '' } = result;
@@ -20,15 +20,15 @@ function parseActionResult(result) {
 // Primary Actions
 
 function board(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function camp(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function cast(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 // TODO: Should engage logic happen on client side or world side?
@@ -55,47 +55,57 @@ function enter(actor, map) {
 }
 
 function dismount(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
-function fight(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+function fight(actor, map, mapEnts, direction) {
+	const directionCoordinates = COORDINATE_MAP[direction];
+	if (!directionCoordinates) return [false, 'Cannot fight that way.'];
+	const newX = actor.x + directionCoordinates[0];
+	const newY = actor.y + directionCoordinates[1];
+	let targets = mapEnts.filter((ent) => ent.x === newX && ent.y === newY);
+	if (!targets.length) return [true, `No one to fight (${direction}).`];
+	targets = targets.filter((ent) => ent.health);
+	if (!targets.length) return [true, `No effect! (fight ${direction})`];
+	// Resolve combat, giving a portion of damage to all targets
+	// TODO
+	return [true, 'Fighting'];
 }
 
-function fire(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+function fire(actor, map, mapEnts, direction) {
+	return [true, 'Not yet implemented.'];
 }
 
 function get(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function heal(actor, map, mapEnts) {
-	return [false, 'Without precise calculations you could fly right through a star!'];
+	return [true, 'Not yet implemented.'];
 }
 
 function hyperjump(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Without precise calculations you could fly right through a star!'];
 }
 
 function ignite(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function investigate(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function junk(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function jump(actor, map, mapEnts) {
-	return [false, 'You jump. Wee!'];
+	return [true, 'You jump. Wee!'];
 }
 
 function jimmy(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function klimb(actor, map, mapEnts, direction) {
@@ -120,22 +130,20 @@ function klimb(actor, map, mapEnts, direction) {
 }
 
 function launch(actor, map, mapEnts) {
-	return [false, 'You pretend to be a rocket. Wee!'];
+	return [true, 'You pretend to be a rocket. Wee!'];
 }
 
 function locate(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function mix(actor, map, mapEnts, what) {
-	return [false, 'You do not have a mortar and pestle.'];
+	return [true, 'You do not have a mortar and pestle.'];
 }
 
 function move(actor, map, mapEnts, direction) {
 	const directionCoordinates = COORDINATE_MAP[direction];
-	if (!directionCoordinates) {
-		return [false, 'Invalid direction to move'];
-	}
+	if (!directionCoordinates) return [false, 'Invalid direction to move'];
 	const newX = actor.x + directionCoordinates[0];
 	const newY = actor.y + directionCoordinates[1];
 	const edge = map.getOffEdge(newX, newY);
@@ -180,21 +188,21 @@ function move(actor, map, mapEnts, direction) {
 }
 
 function navigate(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function negate(actor, map, mapEnts) {
-	return [false, 'You have no powers of negation yet.'];
+	return [true, 'You have no powers of negation yet.'];
 }
 
 function open(actor, map, mapEnts, direction) {
 	// direction could be "coffin"
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function offer(actor, map, mapEnts) {
 	// for a bribe or payment
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function pass() { // pass time -- eat?
@@ -202,11 +210,11 @@ function pass() { // pass time -- eat?
 }
 
 function pickpocket(actor, map, mapEnts, direction) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function peer(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function plan(actor, map, mapEnts) {
@@ -226,27 +234,28 @@ function plan(actor, map, mapEnts) {
 }
 
 function push(actor, map, mapEnts, direction) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function ready(actor, map, mapEnts, item) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function summon(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function talk(actor, map, mapEnts, direction) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function transact(actor, map, mapEnts, direction) {
-	return [false, 'Not yet implemented.'];
+	return [true, 'Not yet implemented.'];
 }
 
 function unlock(actor, map, mapEnts, item) {
-	return [false, 'Not yet implemented.'];
+	// TODO: See if there's an unlockable item nearby?
+	return [true, 'Not yet implemented.'];
 }
 
 function warmup(actor, map, mapEnts, actionName) {
@@ -254,7 +263,8 @@ function warmup(actor, map, mapEnts, actionName) {
 }
 
 function yell(actor, map, mapEnts) {
-	return [false, 'You yell loudly.'];
+	// TODO: Make neartest horse run towards you
+	return [true, 'You yell loudly.'];
 }
 
 /* eslint-enable no-param-reassign */

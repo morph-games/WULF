@@ -24,4 +24,10 @@ function randIntInclusive(valueA, valueB = 0) {
 	return randInt(bigger, Math.min(valueA, valueB));
 }
 
-export { rand, randInt, randIntInclusive };
+const wait = (t) => new Promise((resolve) => { setTimeout(resolve, t); });
+
+// String
+
+const capitalizeFirst = (string) => string.charAt(0).toUpperCase() + string.slice(1);
+
+export { rand, randInt, randIntInclusive, wait, capitalizeFirst };

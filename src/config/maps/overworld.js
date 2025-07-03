@@ -3,10 +3,11 @@ export default {
 	name: 'Lands of Lord Lunic',
 	scale: 'overworld',
 	map: [
+		'~~~~~~~~~~~~~~~~~~~~~~~',
 		'~~~~~........~~~....~~~~~~~~~~~',
-		'~~~~.........~~~....~~~~~~~~~~~',
+		'~~~~.....B...~~~....~~~~~~~~~~~',
 		'~~~~..ff.....f~..f..~~~~~',
-		'~~~...^f.G...ffffff.~~~~~',
+		'~~~...^f.....ffffff.~~~~~',
 		'~~~..^^^.......fffff.~~~~',
 		'~~~..^^^........3fff...',
 		'~~~..^^........fffff..',
@@ -27,13 +28,17 @@ export default {
 		'~~~~~~~.~~.......~..~',
 	],
 	legend: {
-		'f': ['forest'],
 		'1': ['grass', 'village'],
 		'2': ['grass', 'town'],
 		'3': ['grass', { type: 'city', enter: ['castle1'] }],
-		'D': ['mountain', 'dungeon'],
+		'D': ['grass', 'dungeon'],
 		'K': ['grass', { type: 'king' }],
 		'G': ['grass', 'guard'],
+	},
+	spawn: { // WIP
+		types: ['beastman'],
+		max: 10,
+		cooldownMulitplier: 1,
 	},
 	overflow: 'water',
 	exits: {

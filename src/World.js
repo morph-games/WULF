@@ -3,8 +3,7 @@ import EntityManager from './EntityManager.js';
 import WorldMap from './WorldMap.js';
 import SchedulerQueue from './SchedulerQueue.js';
 import Actions from './Actions.js';
-
-const wait = (t) => new Promise((resolve) => { setTimeout(resolve, t); });
+import { wait } from './utilities.js';
 
 export default class World {
 	constructor(worldOptions = {}, actionConfig = {}, worldComm = null) {
@@ -36,7 +35,7 @@ export default class World {
 			whoId: 'my-avatar-1',
 			mapId: overworldMapId,
 			x: 10,
-			y: 5,
+			y: 6,
 			stats: {}, // TODO
 		});
 		this.time = 100; // TODO: load from disk
@@ -184,7 +183,7 @@ export default class World {
 	async updateClient(whoId) {
 		const visibleWorld = await this.getVisibleWorld(whoId);
 		const party = await this.getParty(whoId);
-		this.worldComm.sendDataToClient({ visibleWorld, party });
+		this.worldComm.sendDataToClient({ visibleWorld, party, deltas: this.deltas });
 	}
 
 	// Simulate
@@ -236,7 +235,7 @@ export default class World {
 		if (stops) {
 			this.updateAllClients();
 		} else {
-			await wait(20);
+			await wait(10);
 			this.sim(tStep);
 		}
 	}
@@ -358,6 +357,7 @@ export default class World {
 
 		if (Actions.has(firstCommand)) {
 			if (!who.action) return { success: false, message: `${whoId} cannot do actions.` };
+			console.log('World enqueue action:', firstCommand, commandParams);
 			this.actions.enqueue(who, firstCommand, commandParams.join(' '));
 			this.sim();
 			return { success: true, message: 'Action queued' };

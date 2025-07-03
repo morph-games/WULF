@@ -17,8 +17,16 @@ class Observer {
 
 	/** Remove event, analogous to `removeEventListener` and jQuery's `off` */
 	off(eventTypeName, listener) {
+		if (typeof eventTypeName === 'undefined') {
+			this.eventListeners = {};
+			return;
+		}
 		const eventListenerSet = this.eventListeners[eventTypeName];
 		if (!eventListenerSet) return;
+		if (typeof listener === 'undefined') {
+			eventListenerSet.clear();
+			return;
+		}
 		eventListenerSet.delete(listener);
 	}
 

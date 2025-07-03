@@ -7,9 +7,16 @@ import castle1B from './maps/castle1B.js';
 
 const FONT_SIZE = 8;
 const SCREEN_WIDTH_LETTERS = SCREEN_WIDTH / FONT_SIZE;
+const MAX_ROWS = SCREEN_HEIGHT / FONT_SIZE;
+const MAX_COLS = SCREEN_WIDTH / FONT_SIZE;
+const HALF_COLS = Math.floor(MAX_COLS / 2);
 
 /* eslint-disable quote-props */
 export default {
+	settings: {
+		bumpCombat: 1,
+		autoEnter: 0,
+	},
 	spritesheets,
 	screen: {
 		containerSelector: '#screen',
@@ -22,6 +29,7 @@ export default {
 		vertical: 'bottom',
 		rows: 4,
 		columns: SCREEN_WIDTH_LETTERS - 10, // 'max',
+		cursor: '>',
 		fontSize: FONT_SIZE,
 	},
 	quickStatConsole: {
@@ -29,9 +37,24 @@ export default {
 		vertical: 'bottom',
 		rows: 4,
 		columns: 10,
-		cursor: '',
 		fontSize: FONT_SIZE,
 	},
+	commandConsoles: [
+		{
+			horizontal: 1,
+			vertical: 1,
+			rows: MAX_ROWS - 2,
+			columns: HALF_COLS - 1,
+			fontSize: FONT_SIZE,
+		},
+		{
+			horizontal: HALF_COLS + 1,
+			vertical: 1,
+			rows: MAX_ROWS - 2,
+			columns: HALF_COLS - 2,
+			fontSize: FONT_SIZE,
+		},
+	],
 	world: {
 		obstacleTypes: [
 			'none', 		// 0
@@ -66,6 +89,7 @@ export default {
 			'f': ['forest'],
 			'-': ['floor'],
 			'#': ['wall'],
+			'B': ['grass', 'beastman'],
 		},
 		timing: { // How many time units do certain things cooldown after
 			actionCooldown: 20,
@@ -75,6 +99,8 @@ export default {
 			overworldEating: 100,
 			townEating: 10000,
 			regen: 120,
+			spawnCooldown: 80,
+			spawnCooldownRandom: 50,
 		},
 	},
 	stats: {
@@ -149,10 +175,28 @@ export default {
 				' ': 'abort',
 			},
 		},
+		commands: {
+			kb: {
+				ArrowUp: 'previous',
+				ArrowDown: 'next',
+				ArrowLeft: 'previous',
+				ArrowRight: 'next',
+				w: 'previous',
+				a: 'previous',
+				s: 'next',
+				d: 'next',
+				Escape: 'abort',
+				Enter: 'execute',
+				' ': 'execute',
+				'?': 'abort',
+				F1: 'abort',
+			},
+		},
 		navigate: { // Navigate
 
 		},
 		travel: {
+			hideCommands: ['/', '0', '1', '=', 'G', 'Q', 'Enter'],
 			kb: {
 				ArrowUp: 'go up',
 				ArrowDown: 'go down',
@@ -168,6 +212,8 @@ export default {
 				'-': 'volume down',
 				'=': 'volume up',
 				'+': 'volume up',
+				'?': 'see commands',
+				F1: 'see commands',
 				a: 'go left', // New WASD movement
 				// a = U1-5: attack + direction
 				b: 'board',
@@ -179,10 +225,10 @@ export default {
 				// e: 'enter', // All
 				f: 'fight direction', // New - More general form - will use firing or melee depending on range
 				// f: 'fire', // U1 and others
-				g: 'get', // (show list of nearby items?)
+				g: 'get nearby', // (show list of nearby items?)
 				// g: 'get item', // U1,2,5
 				// g: 'get chest' // U3,4: get chest and attempt to disarm traps
-				G: 'get all', // New: take everything
+				// G: 'get all', // New: take everything
 				h: 'hole up', // 'hole up' (camp) U4-5
 				// h: 'hull repair', // New idea for frigate
 				// h: 'heal' // New idea: either does hull repair or hole up
@@ -213,7 +259,7 @@ export default {
 				// p: 'peer', // U3, U4: Peer at a gem (view map)
 				// p: 'push or pull' // U5
 				q: 'quicksave',
-				Q: 'quit and save', // U1 (and others?)
+				// Q: 'quit and save', // U1 (and others?)
 				r: 'ready item', // Use item
 				// r: 'ready' // Most games: Ready weapon/armor/spell (select to limit choices)
 				s: 'go down', // New WASD movement

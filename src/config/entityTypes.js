@@ -154,6 +154,11 @@ export default {
 		type: 'actor',
 		sprite: 'spearman-2',
 	},
+	beastman: {
+		type: 'actor',
+		sprite: 'beastman-0',
+		plan: { randomMove: 0.5 },
+	},
 
 	// ---- Items ----
 	item: {

@@ -56,7 +56,7 @@ export default {
 	overflow: 'grass',
 	entrance: ['center', 'bottom'],
 	exits: {
-		edges: ['overworld', 16, 4],
+		edges: ['overworld', 16, 6],
 		down: ['castle1B', -1, -1],
 	},
 };
