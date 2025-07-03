@@ -4,7 +4,7 @@ export default class InputController {
 	constructor(states) {
 		if (!states) console.warn('No states param');
 		this.states = states || {};
-		this.kbCommander = new KeyboardCommander();
+		this.kbCommander = new KeyboardCommander({}, { triggerOnRepeat: true });
 	}
 
 	setup(selector = 'button') {

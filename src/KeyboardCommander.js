@@ -32,7 +32,7 @@ class KeyboardCommander extends Observer {
 		if (!this.document.addEventListener) throw new Error('document with addEventListener is required');
 		this.keysDown = {};
 		this.commandsDown = {};
-		this.keyPressListener = (event) => this.handleKeyPress(event);
+		this.keyDownListener = (event) => this.handleKeyDown(event);
 		this.keyUpListener = (event) => this.handleKeyUp(event);
 		// Set up event hooks, if provided
 		this.setupEventListeners(options);
@@ -69,18 +69,18 @@ class KeyboardCommander extends Observer {
 	}
 
 	mount() {
-		this.document.addEventListener(KEY_EVENT, this.keyPressListener);
+		this.document.addEventListener(KEY_EVENT, this.keyDownListener);
 		this.document.addEventListener(KEY_UP_EVENT, this.keyUpListener);
 		this.trigger(MOUNT_EVENT);
 	}
 
 	unmount() {
-		this.document.removeEventListener(KEY_EVENT, this.keyPressListener);
+		this.document.removeEventListener(KEY_EVENT, this.keyDownListener);
 		this.document.removeEventListener(KEY_UP_EVENT, this.keyUpListener);
 		this.trigger(UNMOUNT_EVENT);
 	}
 
-	handleKeyPress(event) {
+	handleKeyDown(event) {
 		// https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent
 		const { key, code, keyCode, altKey, ctrlKey, shiftKey, metaKey, repeat } = event;
 		const details = { code, keyCode, altKey, ctrlKey, shiftKey, metaKey, repeat };
@@ -95,6 +95,7 @@ class KeyboardCommander extends Observer {
 			if (command) this.commandsDown[command] = true;
 		}
 		const trigger = (!repeat || this.triggerOnRepeat);
+		console.log(key, trigger);
 		if (trigger) this.triggerKey(key, details);
 	}
 
