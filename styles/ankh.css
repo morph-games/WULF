@@ -31,10 +31,12 @@ main {
 canvas {
 	image-rendering: pixelated;
 	image-rendering: crisp-edges;
+	
 }
 
 #screen {
 	/* border: solid 1px red; */
+	transition: all 0.5s ease-in-out;
 }
 #screen canvas {
 	background: #000;
