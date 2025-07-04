@@ -10,25 +10,38 @@ import { randIntInclusive } from './utilities.js';
 
 function parseActionResult(result) {
 	let { success = null, message = '' } = result;
-	const { followUp = null, cooldownMultiplier = 1 } = result;
+	const { followUp = null, cooldownMultiplier = 1, quiet = false } = result;
 	if (result instanceof Array) {
 		[success, message] = result;
 	}
-	return { success, message, followUp, cooldownMultiplier };
+	return { success, message, followUp, cooldownMultiplier, quiet };
+}
+
+function getMapEntitiesAt(mapEnts, x, y) {
+	return mapEnts.filter((ent) => (ent.x === x && ent.y === y));
+}
+
+function getMapEntitiesAtActor(mapEnts, actor) {
+	return getMapEntitiesAt(mapEnts, actor.x, actor.y).filter((ent) => ent.entId !== actor.entId);
+}
+
+function getTopEntityComponent(ents = [], componentName) {
+	const entsWithComp = ents.filter((ent) => ent[componentName]);
+	return (entsWithComp.length) ? entsWithComp[0][componentName] : null;
 }
 
 // Primary Actions
 
 function board(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function camp(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function cast(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 // TODO: Should engage logic happen on client side or world side?
@@ -38,24 +51,29 @@ function engage(actor, map, mapEnts) {
 	return this.enter(actor, map, mapEnts);
 }
 
-function enter(actor, map) {
-	const enterValue = map.getTopProperty('enter', actor.x, actor.y);
-	if (!enterValue) {
-		const klimbResult = this.klimb(actor, map);
+function enter(actor, map, mapEnts) {
+	if (!actor.canEnter) return [false, 'You cannot enter.'];
+	const enterComp = getTopEntityComponent(getMapEntitiesAtActor(mapEnts, actor), 'enter');
+	if (!enterComp) {
+		const klimbResult = this.klimb(actor, map, mapEnts);
 		const { success } = parseActionResult(klimbResult);
 		if (success) return klimbResult;
 		return [false, 'There is nothing to enter.'];
 	}
-	if (!actor.canEnter) return [false, 'You cannot enter.'];
+	if (!enterComp.mapKey) {
+		return [false, 'Error entering!'];
+	}
+	const enterArray = [enterComp.mapKey];
 	return {
 		success: true,
-		message: `You enter ${map.getName()}.`,
-		followUp: ['moveActorMap', actor, enterValue],
+		message: `You enter a new location.`,
+		// quiet: true,
+		followUp: ['moveActorMap', actor, enterArray],
 	};
 }
 
 function dismount(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function fight(actor, map, mapEnts, direction) {
@@ -63,7 +81,7 @@ function fight(actor, map, mapEnts, direction) {
 	if (!directionCoordinates) return [false, 'Cannot fight that way.'];
 	const newX = actor.x + directionCoordinates[0];
 	const newY = actor.y + directionCoordinates[1];
-	let targets = mapEnts.filter((ent) => ent.x === newX && ent.y === newY);
+	let targets = getMapEntitiesAt(mapEnts, newX, newY);
 	if (!targets.length) return [true, `No one to fight (${direction}).`];
 	targets = targets.filter((ent) => ent.health);
 	if (!targets.length) return [true, `No effect! (fight ${direction})`];
@@ -73,31 +91,31 @@ function fight(actor, map, mapEnts, direction) {
 }
 
 function fire(actor, map, mapEnts, direction) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function get(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function heal(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function hyperjump(actor, map, mapEnts) {
-	return [true, 'Without precise calculations you could fly right through a star!'];
+	return [false, 'Without precise calculations you could fly right through a star!'];
 }
 
 function ignite(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function investigate(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function junk(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function jump(actor, map, mapEnts) {
@@ -105,26 +123,33 @@ function jump(actor, map, mapEnts) {
 }
 
 function jimmy(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
-function klimb(actor, map, mapEnts, direction) {
-	const klimbDirection = map.getTopProperty('klimb', actor.x, actor.y);
-	if (!klimbDirection) {
+function klimb(actor, map, mapEnts, actionDirection) {
+	if (!actor.canKlimb) return [false, 'You cannot climb.'];
+	const klimbable = getTopEntityComponent(getMapEntitiesAtActor(mapEnts, actor), 'klimbable');
+	if (!klimbable) {
 		return [false, 'There is nothing to climb here.'];
 	}
-	if (direction && klimbDirection !== direction) {
-		return [false, `Cannot climb ${direction} here.`];
+	const { speed = 1, direction } = klimbable;
+	if (actionDirection) {
+		// TODO: If directions don't match, then keep looking through the entities to see if one
+		// matches the direction. There is a rare issue where 2+ klimbable entities are on the same
+		// cell, with different directions. That should almost never happen though.
+		if (direction !== actionDirection) {
+			return [false, `Cannot climb ${actionDirection} here.`];
+		}
 	}
-	const exitValue = map.getExit(klimbDirection);
+	const exitValue = map.getExit(direction);
 	if (!exitValue) {
 		return [false, 'Cannot exit the area.'];
 	}
-	// this.moveActorMap(who, exitValue, true);
 	const isRelativeCoords = true;
 	return {
 		success: true,
-		message: `You climb ${klimbDirection}.`,
+		message: `You climb ${direction}.`,
+		cooldownMultiplier: speed,
 		followUp: ['moveActorMap', actor, exitValue, isRelativeCoords],
 	};
 }
@@ -134,7 +159,7 @@ function launch(actor, map, mapEnts) {
 }
 
 function locate(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function mix(actor, map, mapEnts, what) {
@@ -173,7 +198,11 @@ function move(actor, map, mapEnts, direction) {
 	const exitValue = map.getExit(edge);
 	if (exitValue instanceof Array) {
 		// this.moveActorMap(actor, exitValue);
-		return { success: true, message: 'You leave.', followUp: ['moveActorMap', actor, exitValue] };
+		return {
+			success: true,
+			message: `You leave ${map.getName()}.`,
+			followUp: ['moveActorMap', actor, exitValue],
+		};
 	}
 	if (exitValue === 'BLOCK') {
 		return [false, `Blocked ${direction}.`];
@@ -188,7 +217,7 @@ function move(actor, map, mapEnts, direction) {
 }
 
 function navigate(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function negate(actor, map, mapEnts) {
@@ -197,12 +226,12 @@ function negate(actor, map, mapEnts) {
 
 function open(actor, map, mapEnts, direction) {
 	// direction could be "coffin"
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function offer(actor, map, mapEnts) {
 	// for a bribe or payment
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function pass() { // pass time -- eat?
@@ -210,11 +239,11 @@ function pass() { // pass time -- eat?
 }
 
 function pickpocket(actor, map, mapEnts, direction) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function peer(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function plan(actor, map, mapEnts) {
@@ -234,32 +263,36 @@ function plan(actor, map, mapEnts) {
 }
 
 function push(actor, map, mapEnts, direction) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function ready(actor, map, mapEnts, item) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function summon(actor, map, mapEnts) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function talk(actor, map, mapEnts, direction) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function transact(actor, map, mapEnts, direction) {
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function unlock(actor, map, mapEnts, item) {
 	// TODO: See if there's an unlockable item nearby?
-	return [true, 'Not yet implemented.'];
+	return [false, 'Not yet implemented.'];
 }
 
 function warmup(actor, map, mapEnts, actionName) {
-	return [true, `You prepare to ${actionName}.`];
+	return {
+		success: true,
+		message: `You prepare to ${actionName}.`,
+		quiet: true,
+	};
 }
 
 function yell(actor, map, mapEnts) {
@@ -373,7 +406,8 @@ export default class Actions {
 		if (!actionName) throw new Error('Missing actionName');
 		if (!actions[actionName]) throw new Error(`Invalid actionName ${actionName}`);
 		const result = actions[actionName](actor, map, mapEnts, actionParamsString);
-		const { success, message, followUp, cooldownMultiplier } = parseActionResult(result);
+		const actionResult = parseActionResult(result);
+		const { success, cooldownMultiplier } = actionResult;
 		if (success) {
 			const cd = (
 				this.getCooldownTime(actionName, actionParamsString)
@@ -383,7 +417,7 @@ export default class Actions {
 			action.cooldown += cd;
 		}
 		// console.log(actor.entId, actor, result);
-		return [success, message, followUp];
+		return actionResult;
 	}
 
 	getWarmupTime(actionName) {

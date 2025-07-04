@@ -97,8 +97,8 @@ export default {
 		isProp: true,
 		// ?
 	},
-	ladderDown: { type: 'prop', sprite: 'ladder-down', klimb: 'down' },
-	ladderUp: { type: 'prop', sprite: 'ladder-up', klimb: 'up' },
+	ladderDown: { type: 'prop', sprite: 'ladder-down', klimbable: { speed: 1, direction: 'down' } },
+	ladderUp: { type: 'prop', sprite: 'ladder-up', klimbable: { speed: 1, direction: 'up' } },
 
 	// ---- Actors ----
 	actor: {
@@ -128,6 +128,7 @@ export default {
 		sprite: 'spearman-0',
 		canEnter: true,
 		canExit: true,
+		canKlimb: true,
 		health: {
 			hp: 99,
 			hpMax: 99,

@@ -2,6 +2,7 @@ import EntityTypes from './EntityTypes.js';
 import EntityManager from './EntityManager.js';
 import WorldMap from './WorldMap.js';
 import SchedulerQueue from './SchedulerQueue.js';
+import WorldSaveLoadManager from './WorldSaveLoadManager.js';
 import Actions from './Actions.js';
 import { wait } from './utilities.js';
 
@@ -26,9 +27,11 @@ export default class World {
 		this.worldLog = [];
 		this.deltas = [];
 		this.ents.allAllFromMaps(this.maps);
+		this.saveLoadManager = new WorldSaveLoadManager();
 	}
 
 	async load() {
+		
 		const overworldMapId = this.maps.findIndex((map) => map.mapKey === 'overworld');
 		this.ents.addAvatar({
 			type: 'avatar',
@@ -45,6 +48,13 @@ export default class World {
 			actor.action.cooldown = this.time; // eslint-disable-line no-param-reassign
 		});
 		this.updateAllClients();
+
+		await this.saveLoadManager.setup();
+		this.save();
+	}
+
+	async save() {
+		await this.saveLoadManager.saveWorld(this, 'test-save');
 	}
 
 	// Connection-related
@@ -202,14 +212,15 @@ export default class World {
 		}
 		const map = this.getMap(mapId);
 		const mapEnts = this.ents.getEntitiesOnMap(mapId);
-		const [success, message, followUp] = this.actions.perform(who, map, mapEnts, mapTime);
+		const { success, message, followUp, quiet } = this.actions.perform(who, map, mapEnts, mapTime);
+		// console.log('Performed action', who.whoId, success, message);
 		if (followUp) { // World methods that need to be called afterwards
 			this[followUp[0]](...followUp.slice(1));
 		}
 		if (this.connections[whoId]) await this.updateClient(whoId);
 		// console.log(success, message);
 		// Return a "delta" (WIP)
-		return { mapId, mapTime, success, message, whoId, worldTime: this.time };
+		return { mapId, mapTime, success, message, quiet, whoId, worldTime: this.time };
 	}
 
 	getSimMapIds() {
@@ -262,9 +273,11 @@ export default class World {
 		}
 		const delta = await this.performAction(topActor, map.time);
 		if (!delta) return false; // Didn't do anything - just leave
-		// If delta was not a success, then assume it did not change the world, and don't bother
-		// tracking it
-		if (delta.success) this.deltas.push(delta);
+		// If delta was not a success, we could assume it did not change the world, and don't bother
+		// tracking it, but then we won't end up displaying failed actions to the user
+		// if (delta.success) this.deltas.push(delta);
+		// ... So instead we'll add all deltas for now. If this gets too noisy, reconsider this.
+		this.deltas.push(delta);
 		// action may have changed cooldowns, so need to resort
 		q.sort();
 		return false;

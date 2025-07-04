@@ -37,7 +37,7 @@ export default {
 	legend: {
 		'U': ['door'],
 		'G': ['floor', 'guard'],
-		'<': ['floor', { type: 'ladderUp', klimb: 'up' }],
+		'<': ['floor', 'ladderUp'],
 	},
 	entrance: ['center', 'bottom'],
 	exits: {

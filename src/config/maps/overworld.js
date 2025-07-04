@@ -32,7 +32,7 @@ export default {
 	legend: {
 		'1': ['grass', 'village'],
 		'2': ['grass', 'town'],
-		'3': ['grass', { type: 'city', enter: ['castle1'] }],
+		'3': ['grass', { type: 'city', enter: { mapKey: 'castle1' } }],
 		'D': ['grass', 'dungeon'],
 		'K': ['grass', { type: 'king' }],
 		'G': ['grass', 'guard'],

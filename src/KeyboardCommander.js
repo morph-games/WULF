@@ -95,7 +95,6 @@ class KeyboardCommander extends Observer {
 			if (command) this.commandsDown[command] = true;
 		}
 		const trigger = (!repeat || this.triggerOnRepeat);
-		console.log(key, trigger);
 		if (trigger) this.triggerKey(key, details);
 	}
 

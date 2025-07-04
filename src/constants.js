@@ -10,6 +10,8 @@ const COORDINATE_MAP = {
 };
 const DEFAULT_COOLDOWN = 20;
 const DEFAULT_WARMUP = 5;
+const VOLUME_MIN = 0;
+const VOLUME_MAX = 10;
 
 export {
 	COORDINATE_MAP,
@@ -17,6 +19,8 @@ export {
 	DEFAULT_WARMUP,
 	SCREEN_HEIGHT,
 	SCREEN_WIDTH,
+	VOLUME_MIN,
+	VOLUME_MAX,
 	X_INDEX,
 	Y_INDEX,
 };

@@ -132,6 +132,7 @@ export default class WorldMap {
 		return cellDetails;
 	}
 
+	/** @deprecated */
 	getTopProperty(propertyName, x, y) {
 		const arr = this.getCellData(x, y);
 		let item;

@@ -198,22 +198,13 @@ export default {
 		travel: {
 			hideCommands: ['/', '0', '1', '=', 'G', 'Q', 'Enter'],
 			kb: {
-				ArrowUp: 'go up',
-				ArrowDown: 'go down',
-				ArrowLeft: 'go left',
-				ArrowRight: 'go right',
+				' ': 'pass', // pass time and eat (U1-U5)
 				Tab: 'toggle party', // New - Show party screen; show inventory
 				Enter: 'chat', // New - Chat? Same as yell?
 				'/': 'command', // New - enter in special commands
 				0: 'party return', // Return active player to party
 				// - 1-6 = Select active player
 				1: 'party 1',
-				' ': 'pass', // pass time and eat (U1-U5)
-				'-': 'volume down',
-				'=': 'volume up',
-				'+': 'volume up',
-				'?': 'see commands',
-				F1: 'see commands',
 				a: 'go left', // New WASD movement
 				// a = U1-5: attack + direction
 				b: 'board',
@@ -282,6 +273,15 @@ export default {
 				// - y = U2, U5: Yell what you type (pointless in U2)
 				// - y = U4: Yell for horse (advances plot)
 				z: 'ztats', // Show stats (statistics and inventory)
+				ArrowUp: 'go up',
+				ArrowDown: 'go down',
+				ArrowLeft: 'go left',
+				ArrowRight: 'go right',
+				'+': 'volume up',
+				'=': 'volume up',
+				'-': 'volume down',
+				'?': 'see commands',
+				F1: 'see commands',
 			},
 		},
 	},

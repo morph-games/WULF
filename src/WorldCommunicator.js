@@ -15,7 +15,7 @@ export default class WorldCommunicator extends Observer {
 	async startLocalWorld(worldOptions, actionConfig) {
 		this.localWorld = new World(worldOptions, actionConfig, this);
 		window.world = this.localWorld;
-		// await this.localWorld.load();
+		await this.localWorld.load();
 	}
 
 	async connect(whoId, visibleWorldWidth, visibleWorldHeight) {
@@ -29,7 +29,7 @@ export default class WorldCommunicator extends Observer {
 	}
 
 	async load() {
-		await this.localWorld.load();
+		// await this.localWorld.load();
 	}
 
 	async sendCommandToWorld(commandStringOrArray, whoId) {

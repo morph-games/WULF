@@ -51,7 +51,7 @@ export default {
 		'K': ['floor', 'king'],
 		'(': ['signLeft'],
 		')': ['signRight'],
-		'>': ['floor', { type: 'ladderDown', klimb: 'down' }],
+		'>': ['floor', 'ladderDown'],
 	},
 	overflow: 'grass',
 	entrance: ['center', 'bottom'],

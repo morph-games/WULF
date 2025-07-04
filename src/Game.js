@@ -6,6 +6,7 @@ import SpriteSheet from './Spritesheet.js';
 import InputController from './InputController.js';
 import WorldCommunicator from './WorldCommunicator.js';
 import { wait, capitalizeFirst } from './utilities.js';
+import { VOLUME_MIN, VOLUME_MAX } from './constants.js';
 
 function testFontDraw(gCanvas) { // eslint-disable-line
 	const { ctx } = gCanvas;
@@ -52,6 +53,7 @@ export default class Game {
 		this.party = {};
 		this.avatarWhoId = null;
 		this.renderWorldTime = 0; // the world time that we are rendered up to
+		this.volume = 5;
 	}
 
 	static waitForDom() {
@@ -159,14 +161,20 @@ export default class Game {
 		};
 		const clientOnlyCommands = {
 			volume: (direction) => {
-				console.log('volume', direction);
-				// TODO: do volume controls
+				let amount = 0;
+				if (direction === 'up') amount = 1;
+				else if (direction === 'down') amount = -1;
+				this.volume = Math.min(Math.max(this.volume + amount, VOLUME_MIN), VOLUME_MAX);
+				this.mainConsole.print(`Volume: ${this.volume}`);
+				// TODO: Make a beep noise so the user can see what the volume is like
 			},
 			switch: (stateName) => this.switchTo(stateName),
 			see: (stateName) => this.switchTo(stateName),
 			abort: () => {
 				this.switchToTravel();
 			},
+			view: () => {},
+			chat: () => {},
 		};
 		const commandWords = String(commandString).toLowerCase().split(' ');
 		const aliasCommand = aliases[commandWords[0]];
@@ -310,12 +318,13 @@ export default class Game {
 		const messagesBackwards = [];
 		Game.loopDeltas(deltas, fromWorldTime, toWorldTime, (delta) => {
 			if (this.renderWorldTime < delta.worldTime) {
-				if (delta.whoId === this.avatarWhoId) {
+				if (delta.whoId === this.avatarWhoId && !delta.quiet) {
 					messagesBackwards.push(delta.message);
 				}
 			}
 		});
 		for (let i = messagesBackwards.length - 1; i >= 0; i -= 1) {
+			console.log('Print', messagesBackwards[i]);
 			this.mainConsole.print(messagesBackwards[i]);
 		}
 	}
