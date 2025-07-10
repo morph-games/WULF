@@ -1,4 +1,5 @@
-// Taken from Little.js https://github.com/KilledByAPixel/LittleJS/blob/main/src/engineUtilities.js
+// Many functions taken from Little.js (MIT license) by Frank Force
+// https://github.com/KilledByAPixel/LittleJS/blob/main/src/engineUtilities.js
 
 /** Random global functions
  *  @namespace Random */
@@ -24,10 +25,30 @@ function randIntInclusive(valueA, valueB = 0) {
 	return randInt(bigger, Math.min(valueA, valueB));
 }
 
+function distanceSquared(x1, y1, x2, y2) {
+	return (x1 - x2)**2 + (y1 - y2)**2;
+}
+
+function distance(x1, y1, x2, y2) {
+	return distanceSquared(x1, y1, x2, y2) ** 0.5;
+}
+
 const wait = (t) => new Promise((resolve) => { setTimeout(resolve, t); });
 
 // String
 
 const capitalizeFirst = (string) => string.charAt(0).toUpperCase() + string.slice(1);
 
-export { rand, randInt, randIntInclusive, wait, capitalizeFirst };
+export {
+	// Randomness
+	rand,
+	randInt,
+	randIntInclusive,
+	// Timing
+	wait,
+	// String
+	capitalizeFirst,
+	// Vector math
+	distanceSquared,
+	distance,
+};

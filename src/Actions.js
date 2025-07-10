@@ -1,5 +1,7 @@
-import { DEFAULT_COOLDOWN, DEFAULT_WARMUP, COORDINATE_MAP } from './constants.js';
-import { randIntInclusive } from './utilities.js';
+import { DEFAULT_COOLDOWN, DEFAULT_WARMUP, COORDINATE_MAP,
+	DIRECTIONS_ARRAY
+} from './constants.js';
+import { randIntInclusive, distance } from './utilities.js';
 // Actions are essentially ECS Systems
 // They are things that most actors can do, and they
 // effect the world (the map) and the entities there.
@@ -25,12 +27,102 @@ function getMapEntitiesAtActor(mapEnts, actor) {
 	return getMapEntitiesAt(mapEnts, actor.x, actor.y).filter((ent) => ent.entId !== actor.entId);
 }
 
+function getMapEntitiesNextToActor(mapEnts, actor, direction) {
+	const directionCoordinates = COORDINATE_MAP[direction];
+	if (!directionCoordinates) return [];
+	const newX = actor.x + directionCoordinates[0];
+	const newY = actor.y + directionCoordinates[1];
+	return getMapEntitiesAt(mapEnts, newX, newY);
+}
+
 function getTopEntityComponent(ents = [], componentName) {
 	const entsWithComp = ents.filter((ent) => ent[componentName]);
 	return (entsWithComp.length) ? entsWithComp[0][componentName] : null;
 }
 
-// Primary Actions
+function findNearest(mapEnts = [], x = 0, y = 0, filterFunction = null) {
+	let nearestDistance = Infinity;
+	let nearestEnt = null;
+	mapEnts.forEach((ent) => {
+		if (filterFunction && !filterFunction(ent)) return;
+		const d = distance(ent.x, ent.y, x, y);
+		if (d < nearestDistance) {
+			nearestDistance = d;
+			nearestEnt = ent;
+		}
+	});
+	return [nearestEnt, nearestDistance];
+}
+
+function getEntityDistance(ent1, ent2) {
+	return distance(ent1.x, ent1.y, ent2.x, ent2.y);
+}
+
+function getDirectionTo(sourceEnt, destinationEnt) {
+	const diffX = destinationEnt.x - sourceEnt.x;
+	const diffY = destinationEnt.y - sourceEnt.y;
+	if (diffX === 0 && diffY === 0) {
+		console.warn('Could not give a direction between', sourceEnt, destinationEnt);
+		return '';
+	}
+	if (Math.abs(diffX) > Math.abs(diffY)) return diffX < 0 ? 'left' : 'right';
+	return diffY < 0 ? 'up' : 'down';
+}
+
+function combineSpeed(comp1, comp2) {
+	return (
+		((typeof comp1.speed === 'number') ? comp1.speed : 1)
+		* ((typeof comp2.speed === 'number') ? comp2.speed : 1)
+	);
+}
+
+function calcFactionAlignment(ent1, ent2) {
+	const factions1 = ent1?.factions || {};
+	const factions2 = ent2?.factions || {};
+	const factionKeys = [...Object.keys(factions1), ...Object.keys(factions2)];
+	const uniqueFactionKeys = [...(new Set(factionKeys))];
+	const alignment = uniqueFactionKeys.reduce((sum, key) => {
+		const score1 = factions1[key] || 0;
+		const score2 = factions2[key] || 0;
+		if (score1 === 0 || score2 === 0) return sum; // Don't contribute to alignment
+		if (Math.sign(score1) === Math.sign(score2)) {
+			// Add twice the smaller absolute value positively to the alignment sum
+			return sum + ((Math.min(Math.abs(score1), Math.abs(score2))) * 2);
+		}
+		// If there is disalignment, then subtract the difference
+		return sum - Math.abs(score1 - score2);
+	}, 0);
+	console.log(alignment);
+	return alignment;
+}
+
+function damageEntity(ent, damageAmount, damageType) {
+	ent.health.hp -= damageAmount;
+	console.log('\t', ent.name, 'took', damageAmount, 'damage. HP:', ent.health.hp);
+}
+
+function damageEntities(ents = [], damageAmount, damageType) {
+	const damageableEnts = ents.filter((ent) => ent.health);
+	const dmgPer = Math.floor(damageAmount / damageableEnts.length);
+	const leftover = damageAmount - (dmgPer * damageableEnts.length);
+	const outcomes = damageableEnts.map((ent, i) => {
+		return damageEntity(ent, (i === 0) ? dmgPer + leftover : dmgPer, damageType);
+	});
+	return outcomes;
+}
+
+// ---------- Primary Actions
+
+/** Melee Attack */
+function attack(actor, map, mapEnts, direction) {
+	let targets = getMapEntitiesNextToActor(mapEnts, actor, direction);
+	if (!targets.length) return [true, `No one to fight (${direction}).`];
+	targets = targets.filter((ent) => ent.health);
+	if (!targets.length) return [true, `No effect! (fight ${direction})`];
+	// TODO: Get melee damage amount
+	damageEntities(targets, 10, 'physical');
+	return [true, 'Fighting'];
+}
 
 function board(actor, map, mapEnts) {
 	return [false, 'Not yet implemented.'];
@@ -77,17 +169,12 @@ function dismount(actor, map, mapEnts) {
 }
 
 function fight(actor, map, mapEnts, direction) {
-	const directionCoordinates = COORDINATE_MAP[direction];
-	if (!directionCoordinates) return [false, 'Cannot fight that way.'];
-	const newX = actor.x + directionCoordinates[0];
-	const newY = actor.y + directionCoordinates[1];
-	let targets = getMapEntitiesAt(mapEnts, newX, newY);
-	if (!targets.length) return [true, `No one to fight (${direction}).`];
-	targets = targets.filter((ent) => ent.health);
-	if (!targets.length) return [true, `No effect! (fight ${direction})`];
-	// Resolve combat, giving a portion of damage to all targets
-	// TODO
-	return [true, 'Fighting'];
+	// if (!actor.fighter)
+	// if (actor.attacker)
+	const neighborTargets = getMapEntitiesNextToActor(mapEnts, actor, direction)
+		.filter((ent) => ent.health);
+	if (neighborTargets.length) return attack(actor, map, mapEnts, direction);
+	return fire(actor, map, mapEnts, direction);
 }
 
 function fire(actor, map, mapEnts, direction) {
@@ -127,12 +214,12 @@ function jimmy(actor, map, mapEnts) {
 }
 
 function klimb(actor, map, mapEnts, actionDirection) {
-	if (!actor.canKlimb) return [false, 'You cannot climb.'];
+	if (!actor.klimber) return [false, 'You cannot climb.'];
 	const klimbable = getTopEntityComponent(getMapEntitiesAtActor(mapEnts, actor), 'klimbable');
 	if (!klimbable) {
 		return [false, 'There is nothing to climb here.'];
 	}
-	const { speed = 1, direction } = klimbable;
+	const { direction } = klimbable;
 	if (actionDirection) {
 		// TODO: If directions don't match, then keep looking through the entities to see if one
 		// matches the direction. There is a rare issue where 2+ klimbable entities are on the same
@@ -149,7 +236,7 @@ function klimb(actor, map, mapEnts, actionDirection) {
 	return {
 		success: true,
 		message: `You climb ${direction}.`,
-		cooldownMultiplier: speed,
+		cooldownMultiplier: combineSpeed(actor.klimber, klimbable),
 		followUp: ['moveActorMap', actor, exitValue, isRelativeCoords],
 	};
 }
@@ -189,7 +276,7 @@ function move(actor, map, mapEnts, direction) {
 		actor.y = newY;
 		return {
 			success: true,
-			message: `You move ${direction}`,
+			message: `You move ${direction}.`,
 			cooldownMultiplier: (1 / minTransversal),
 		};
 	}
@@ -251,11 +338,41 @@ function plan(actor, map, mapEnts) {
 		Actions.enqueueWithoutWarmup(actor, 'pass');
 		return [false, 'No thinking.'];
 	}
-	const { randomMove = 0.5 } = actor.plan;
+	const {
+		randomMove = 0.5,
+		aggroRange = 0,
+		hunt = false,
+	} = actor.plan;
+	if (hunt) {
+		const [nearestEnt, dist] = findNearest(mapEnts, actor.x, actor.y, (ent) => {
+			if (!ent.isActor) return false;
+			if (actor.whoId === ent.whoId) return false; // Don't find self
+			// Filter by aggro range and faction friend vs. foe
+			const d = getEntityDistance(ent, actor);
+			if (d > aggroRange) return false; // Beyond range
+			if (calcFactionAlignment(ent, actor) >= 0) return false; // Friendly?
+			return true;
+		});
+		if (nearestEnt) {
+			const dir = getDirectionTo(actor, nearestEnt);
+			if (dir) {
+				const attackRange = actor?.attacker?.range || 0;
+				const fireRange = actor?.firer?.range || 0;
+				// We could determine 'attack' or 'fire' based on range,
+				// or just use the generic 'fight' action to cover both / either.
+				const action = (dist <= attackRange || dist <= fireRange) ? 'fight' : 'move';
+				// TODO: Could make this more nuanced by allowing some actors to have
+				// a preference for melee even if they have a backup ranged attack.
+				// console.log('Planning hunt', action, 'in direction', dir);
+				Actions.enqueueWithoutWarmup(actor, action, dir);
+				return [true, `Planning the hunt (${action})`];
+			}
+		}
+	}
+	
 	if (Math.random() < randomMove) {
-		const dir = ['up', 'down', 'left', 'right'];
 		const i = Math.floor(Math.random() * 4) + 1;
-		Actions.enqueueWithoutWarmup(actor, 'move', dir[i]);
+		Actions.enqueueWithoutWarmup(actor, 'move', DIRECTIONS_ARRAY[i]);
 	} else {
 		Actions.enqueueWithoutWarmup(actor, 'pass');
 	}
@@ -303,6 +420,7 @@ function yell(actor, map, mapEnts) {
 /* eslint-enable no-param-reassign */
 
 const actions = {
+	attack,
 	board,
 	camp,
 	cast,

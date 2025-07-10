@@ -7,9 +7,11 @@ const COORDINATE_MAP = {
 	down: [0, 1],
 	left: [-1, 0],
 	right: [1, 0],
+	here: [0, 0],
 };
 const DEFAULT_COOLDOWN = 20;
 const DEFAULT_WARMUP = 5;
+const DIRECTIONS_ARRAY = ['up', 'right', 'down', 'left'];
 const VOLUME_MIN = 0;
 const VOLUME_MAX = 10;
 
@@ -17,6 +19,7 @@ export {
 	COORDINATE_MAP,
 	DEFAULT_COOLDOWN,
 	DEFAULT_WARMUP,
+	DIRECTIONS_ARRAY,
 	SCREEN_HEIGHT,
 	SCREEN_WIDTH,
 	VOLUME_MIN,

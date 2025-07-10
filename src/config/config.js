@@ -206,7 +206,7 @@ export default {
 				// - 1-6 = Select active player
 				1: 'party 1',
 				a: 'go left', // New WASD movement
-				// a = U1-5: attack + direction
+				// a: 'attack direction', // a = U1-5: attack + direction
 				b: 'board',
 				c: 'cast',
 				d: 'go right', // New WASD movement

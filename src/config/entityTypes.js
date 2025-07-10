@@ -117,7 +117,26 @@ export default {
 			hpMax: 99,
 			deathSprite: 'void', // TODO
 		},
-		klimbSpeed: 1,
+		fighter: {
+			// Preference for melee vs ranged?
+		},
+		attacker: { // melee
+			range: 1,
+		},
+		firer: { // ranged
+			range: 0,
+		},
+		currencies: {
+			coins: 0,
+			food: 100,
+		},
+		inventory: {
+			contents: [],
+			max: 255,
+		},
+		equipment: {
+			
+		},
 		canEnter: false,
 		canExit: false,
 		obstacleId: 13,
@@ -128,7 +147,9 @@ export default {
 		sprite: 'spearman-0',
 		canEnter: true,
 		canExit: true,
-		canKlimb: true,
+		klimber: {
+			speed: 1,
+		},
 		health: {
 			hp: 99,
 			hpMax: 99,
@@ -138,8 +159,25 @@ export default {
 			coins: 0,
 			food: 100,
 		},
+		inventory: {
+			contents: [],
+			max: 255,
+		},
 		xp: {
 			totalXp: 0,
+		},
+		factions: {
+			good: 10,
+			evil: 0,
+		},
+		fighter: {
+			// Preference for melee vs ranged?
+		},
+		attacker: { // melee
+			range: 1,
+		},
+		firer: { // ranged
+			range: 0,
 		},
 	},
 	king: {
@@ -155,10 +193,39 @@ export default {
 		type: 'actor',
 		sprite: 'spearman-2',
 	},
-	beastman: {
+	monster: {
 		type: 'actor',
+		factions: {
+			good: -255,
+			evil: 255,
+		},
+		plan: {
+			randomMove: 0.5,
+			aggroRange: 10,
+			hunt: true,
+		},
+		fighter: {
+			// Preference for melee vs ranged?
+		},
+		attacker: { // melee
+			range: 1,
+		},
+		firer: { // ranged
+			range: 0,
+		},
+		health: {
+			hp: 12,
+			hpMax: 12,
+			respawnOnDeath: false,
+		},
+	},
+	beastman: {
+		type: 'monster',
 		sprite: 'beastman-0',
-		plan: { randomMove: 0.5 },
+	},
+	horse: {
+		type: 'monster', // TODO: make an NPC
+		sprite: 'horseback',
 	},
 
 	// ---- Items ----
