@@ -1,128 +1,32 @@
-import { DEFAULT_COOLDOWN, DEFAULT_WARMUP, COORDINATE_MAP,
-	DIRECTIONS_ARRAY
+import { DEFAULT_COOLDOWN, DEFAULT_WARMUP,
+	DIRECTIONS_ARRAY,
 } from './constants.js';
-import { randIntInclusive, distance } from './utilities.js';
+import { randIntInclusive } from './utilities.js';
+import {
+	parseActionResult,
+	getMapEntitiesAtActor,
+	getMapEntitiesNextToActor,
+	getTopEntityComponent,
+	findNearest,
+	getEntityDistance,
+	getDirectionTo,
+	combineSpeed,
+	calcFactionAlignment,
+	getRangedFireRange,
+	isAlive,
+} from './actionUtilities.js';
+import { attack, getMeleeAttackRange } from './actions/attack.js';
+import { enter } from './actions/enter.js';
+import { move } from './actions/move.js';
+
+const DEATH_COOLDOWN = 100;
 // Actions are essentially ECS Systems
 // They are things that most actors can do, and they
 // effect the world (the map) and the entities there.
 
 /* eslint-disable no-param-reassign, no-unused-vars */
 
-// Utilities / Secondary Actions
-
-function parseActionResult(result) {
-	let { success = null, message = '' } = result;
-	const { followUp = null, cooldownMultiplier = 1, quiet = false } = result;
-	if (result instanceof Array) {
-		[success, message] = result;
-	}
-	return { success, message, followUp, cooldownMultiplier, quiet };
-}
-
-function getMapEntitiesAt(mapEnts, x, y) {
-	return mapEnts.filter((ent) => (ent.x === x && ent.y === y));
-}
-
-function getMapEntitiesAtActor(mapEnts, actor) {
-	return getMapEntitiesAt(mapEnts, actor.x, actor.y).filter((ent) => ent.entId !== actor.entId);
-}
-
-function getMapEntitiesNextToActor(mapEnts, actor, direction) {
-	const directionCoordinates = COORDINATE_MAP[direction];
-	if (!directionCoordinates) return [];
-	const newX = actor.x + directionCoordinates[0];
-	const newY = actor.y + directionCoordinates[1];
-	return getMapEntitiesAt(mapEnts, newX, newY);
-}
-
-function getTopEntityComponent(ents = [], componentName) {
-	const entsWithComp = ents.filter((ent) => ent[componentName]);
-	return (entsWithComp.length) ? entsWithComp[0][componentName] : null;
-}
-
-function findNearest(mapEnts = [], x = 0, y = 0, filterFunction = null) {
-	let nearestDistance = Infinity;
-	let nearestEnt = null;
-	mapEnts.forEach((ent) => {
-		if (filterFunction && !filterFunction(ent)) return;
-		const d = distance(ent.x, ent.y, x, y);
-		if (d < nearestDistance) {
-			nearestDistance = d;
-			nearestEnt = ent;
-		}
-	});
-	return [nearestEnt, nearestDistance];
-}
-
-function getEntityDistance(ent1, ent2) {
-	return distance(ent1.x, ent1.y, ent2.x, ent2.y);
-}
-
-function getDirectionTo(sourceEnt, destinationEnt) {
-	const diffX = destinationEnt.x - sourceEnt.x;
-	const diffY = destinationEnt.y - sourceEnt.y;
-	if (diffX === 0 && diffY === 0) {
-		console.warn('Could not give a direction between', sourceEnt, destinationEnt);
-		return '';
-	}
-	if (Math.abs(diffX) > Math.abs(diffY)) return diffX < 0 ? 'left' : 'right';
-	return diffY < 0 ? 'up' : 'down';
-}
-
-function combineSpeed(comp1, comp2) {
-	return (
-		((typeof comp1.speed === 'number') ? comp1.speed : 1)
-		* ((typeof comp2.speed === 'number') ? comp2.speed : 1)
-	);
-}
-
-function calcFactionAlignment(ent1, ent2) {
-	const factions1 = ent1?.factions || {};
-	const factions2 = ent2?.factions || {};
-	const factionKeys = [...Object.keys(factions1), ...Object.keys(factions2)];
-	const uniqueFactionKeys = [...(new Set(factionKeys))];
-	const alignment = uniqueFactionKeys.reduce((sum, key) => {
-		const score1 = factions1[key] || 0;
-		const score2 = factions2[key] || 0;
-		if (score1 === 0 || score2 === 0) return sum; // Don't contribute to alignment
-		if (Math.sign(score1) === Math.sign(score2)) {
-			// Add twice the smaller absolute value positively to the alignment sum
-			return sum + ((Math.min(Math.abs(score1), Math.abs(score2))) * 2);
-		}
-		// If there is disalignment, then subtract the difference
-		return sum - Math.abs(score1 - score2);
-	}, 0);
-	console.log(alignment);
-	return alignment;
-}
-
-function damageEntity(ent, damageAmount, damageType) {
-	ent.health.hp -= damageAmount;
-	console.log('\t', ent.name, 'took', damageAmount, 'damage. HP:', ent.health.hp);
-}
-
-function damageEntities(ents = [], damageAmount, damageType) {
-	const damageableEnts = ents.filter((ent) => ent.health);
-	const dmgPer = Math.floor(damageAmount / damageableEnts.length);
-	const leftover = damageAmount - (dmgPer * damageableEnts.length);
-	const outcomes = damageableEnts.map((ent, i) => {
-		return damageEntity(ent, (i === 0) ? dmgPer + leftover : dmgPer, damageType);
-	});
-	return outcomes;
-}
-
 // ---------- Primary Actions
-
-/** Melee Attack */
-function attack(actor, map, mapEnts, direction) {
-	let targets = getMapEntitiesNextToActor(mapEnts, actor, direction);
-	if (!targets.length) return [true, `No one to fight (${direction}).`];
-	targets = targets.filter((ent) => ent.health);
-	if (!targets.length) return [true, `No effect! (fight ${direction})`];
-	// TODO: Get melee damage amount
-	damageEntities(targets, 10, 'physical');
-	return [true, 'Fighting'];
-}
 
 function board(actor, map, mapEnts) {
 	return [false, 'Not yet implemented.'];
@@ -143,27 +47,6 @@ function engage(actor, map, mapEnts) {
 	return this.enter(actor, map, mapEnts);
 }
 
-function enter(actor, map, mapEnts) {
-	if (!actor.canEnter) return [false, 'You cannot enter.'];
-	const enterComp = getTopEntityComponent(getMapEntitiesAtActor(mapEnts, actor), 'enter');
-	if (!enterComp) {
-		const klimbResult = this.klimb(actor, map, mapEnts);
-		const { success } = parseActionResult(klimbResult);
-		if (success) return klimbResult;
-		return [false, 'There is nothing to enter.'];
-	}
-	if (!enterComp.mapKey) {
-		return [false, 'Error entering!'];
-	}
-	const enterArray = [enterComp.mapKey];
-	return {
-		success: true,
-		message: `You enter a new location.`,
-		// quiet: true,
-		followUp: ['moveActorMap', actor, enterArray],
-	};
-}
-
 function dismount(actor, map, mapEnts) {
 	return [false, 'Not yet implemented.'];
 }
@@ -173,12 +56,12 @@ function fight(actor, map, mapEnts, direction) {
 	// if (actor.attacker)
 	const neighborTargets = getMapEntitiesNextToActor(mapEnts, actor, direction)
 		.filter((ent) => ent.health);
-	if (neighborTargets.length) return attack(actor, map, mapEnts, direction);
-	return fire(actor, map, mapEnts, direction);
+	if (neighborTargets.length) return this.attack(actor, map, mapEnts, direction);
+	return this.fire(actor, map, mapEnts, direction);
 }
 
 function fire(actor, map, mapEnts, direction) {
-	return [false, 'Not yet implemented.'];
+	return [false, 'Firing not yet implemented.'];
 }
 
 function get(actor, map, mapEnts) {
@@ -194,7 +77,7 @@ function hyperjump(actor, map, mapEnts) {
 }
 
 function ignite(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [false, 'Torches not yet implemented.'];
 }
 
 function investigate(actor, map, mapEnts) {
@@ -202,7 +85,7 @@ function investigate(actor, map, mapEnts) {
 }
 
 function junk(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [false, 'Junk not yet implemented.'];
 }
 
 function jump(actor, map, mapEnts) {
@@ -210,7 +93,7 @@ function jump(actor, map, mapEnts) {
 }
 
 function jimmy(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
+	return [false, 'Jimmy not yet implemented.'];
 }
 
 function klimb(actor, map, mapEnts, actionDirection) {
@@ -251,56 +134,6 @@ function locate(actor, map, mapEnts) {
 
 function mix(actor, map, mapEnts, what) {
 	return [true, 'You do not have a mortar and pestle.'];
-}
-
-function move(actor, map, mapEnts, direction) {
-	const directionCoordinates = COORDINATE_MAP[direction];
-	if (!directionCoordinates) return [false, 'Invalid direction to move'];
-	const newX = actor.x + directionCoordinates[0];
-	const newY = actor.y + directionCoordinates[1];
-	const edge = map.getOffEdge(newX, newY);
-	if (!edge) {
-		const terrainEnt = map.getTerrainEntity(newX, newY);
-		// Get obstacle Ids for everything on the cell we want to move to
-		const obstacleIds = [
-			terrainEnt.obstacleId,
-			...mapEnts
-				.filter((ent) => ent.x === newX && ent.y === newY)
-				.map((ent) => ent.obstacleId),
-		];
-		// Get actor's transversal values for the obstacle Ids
-		const transversalValues = obstacleIds.map((obId) => actor?.move?.transversal[obId] || 0);
-		const minTransversal = Math.min(...transversalValues); // Only the lowest value matters
-		if (!minTransversal) return [false, `Blocked ${direction}.`];
-		actor.x = newX;
-		actor.y = newY;
-		return {
-			success: true,
-			message: `You move ${direction}.`,
-			cooldownMultiplier: (1 / minTransversal),
-		};
-	}
-	// Handle off the edge
-	if (!actor.canExit) return [false, 'You cannot exit.'];
-	const exitValue = map.getExit(edge);
-	if (exitValue instanceof Array) {
-		// this.moveActorMap(actor, exitValue);
-		return {
-			success: true,
-			message: `You leave ${map.getName()}.`,
-			followUp: ['moveActorMap', actor, exitValue],
-		};
-	}
-	if (exitValue === 'BLOCK') {
-		return [false, `Blocked ${direction}.`];
-	}
-	if (exitValue === 'LOOP') {
-		const [x, y] = map.getLoopedCoordinates(newX, newY);
-		actor.x = x;
-		actor.y = y;
-		return [true, `You move ${direction}`];
-	}
-	return [false, 'You cannot move.'];
 }
 
 function navigate(actor, map, mapEnts) {
@@ -356,8 +189,8 @@ function plan(actor, map, mapEnts) {
 		if (nearestEnt) {
 			const dir = getDirectionTo(actor, nearestEnt);
 			if (dir) {
-				const attackRange = actor?.attacker?.range || 0;
-				const fireRange = actor?.firer?.range || 0;
+				const attackRange = getMeleeAttackRange(actor);
+				const fireRange = getRangedFireRange(actor);
 				// We could determine 'attack' or 'fire' based on range,
 				// or just use the generic 'fight' action to cover both / either.
 				const action = (dist <= attackRange || dist <= fireRange) ? 'fight' : 'move';
@@ -369,7 +202,7 @@ function plan(actor, map, mapEnts) {
 			}
 		}
 	}
-	
+
 	if (Math.random() < randomMove) {
 		const i = Math.floor(Math.random() * 4) + 1;
 		Actions.enqueueWithoutWarmup(actor, 'move', DIRECTIONS_ARRAY[i]);
@@ -419,7 +252,7 @@ function yell(actor, map, mapEnts) {
 
 /* eslint-enable no-param-reassign */
 
-const actions = {
+const ACTION_FUNCTIONS = {
 	attack,
 	board,
 	camp,
@@ -459,7 +292,7 @@ const actions = {
 	warmup,
 	yell,
 };
-const actionNames = Object.keys(actions);
+const ACTION_NAMES = Object.keys(ACTION_FUNCTIONS);
 
 export default class Actions {
 	constructor(actionsConfig = {}, timingConfig = {}) {
@@ -477,7 +310,7 @@ export default class Actions {
 	}
 
 	static has(actionName) {
-		return actionNames.includes(actionName.toLowerCase());
+		return ACTION_NAMES.includes(actionName.toLowerCase());
 	}
 
 	static hasAction(actor) {
@@ -491,7 +324,11 @@ export default class Actions {
 	}
 
 	static isWaitingForAction(actor, timeNow) {
-		return (!Actions.hasAction(actor) && actor.action.cooldown <= timeNow);
+		return (
+			!Actions.hasAction(actor)
+			&& actor.action.cooldown <= timeNow
+			// && isAlive(actor)
+		);
 	}
 
 	// static cool(actor, timeNow) {
@@ -501,6 +338,12 @@ export default class Actions {
 	// action.cooldown = timeNow;
 	// return deltaT;
 	// }
+
+	static handleDeadActor(actor) {
+		if (isAlive(actor)) return;
+		actor.action.queue = [['pass']];
+		actor.action.cooldown += DEATH_COOLDOWN;
+	}
 
 	static enqueueWithoutWarmup(actor, actionName, actionParamsString) {
 		actor.action.queue.push([actionName, actionParamsString]);
@@ -513,6 +356,22 @@ export default class Actions {
 		actor.action.queue.push([actionName, actionParamsString]);
 	}
 
+	planAction(actor) {
+		// console.log(actor.name, 'plans', isAlive(actor));
+		if (!isAlive(actor)) {
+			Actions.handleDeadActor(actor);
+			return;
+		}
+		this.enqueue(actor, 'plan');
+	}
+
+	runAction(actionName, actor, map, mapEnts, actionParamsString) {
+		if (!actionName) throw new Error('Missing actionName');
+		if (!ACTION_FUNCTIONS[actionName]) throw new Error(`Invalid actionName ${actionName}`);
+		const result = ACTION_FUNCTIONS[actionName](actor, map, mapEnts, actionParamsString, this);
+		return parseActionResult(result);
+	}
+
 	perform(actor, map, mapEnts, timeNow) {
 		if (!Actions.hasReadyAction(actor, timeNow)) {
 			return [false, 'No ready actions.'];
@@ -521,10 +380,11 @@ export default class Actions {
 		const actionArray = action.queue.shift();
 		// console.log('\t\t', actionArray);
 		const [actionName, actionParamsString = ''] = actionArray;
-		if (!actionName) throw new Error('Missing actionName');
-		if (!actions[actionName]) throw new Error(`Invalid actionName ${actionName}`);
-		const result = actions[actionName](actor, map, mapEnts, actionParamsString);
-		const actionResult = parseActionResult(result);
+		if (!isAlive(actor) && actionName !== 'pass') {
+			Actions.handleDeadActor(actor);
+			return parseActionResult([false, `Cannot ${actionName} while dead`]);
+		}
+		const actionResult = this.runAction(actionName, actor, map, mapEnts, actionParamsString);
 		const { success, cooldownMultiplier } = actionResult;
 		if (success) {
 			const cd = (

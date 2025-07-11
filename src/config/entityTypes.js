@@ -103,6 +103,8 @@ export default {
 	// ---- Actors ----
 	actor: {
 		type: 'entity',
+		sprite: 'horse',
+		deadSprite: 'dead-skull',
 		isActor: true,
 		action: {
 			queue: [], // array of actions [actionName, params] to do next
@@ -122,9 +124,14 @@ export default {
 		},
 		attacker: { // melee
 			range: 1,
+			natural: {
+				damage: 1,
+				damageType: 'ph',
+			},
 		},
 		firer: { // ranged
-			range: 0,
+			range: 3,
+			// No natural capability at first
 		},
 		currencies: {
 			coins: 0,
@@ -135,7 +142,7 @@ export default {
 			max: 255,
 		},
 		equipment: {
-			
+			// ?
 		},
 		canEnter: false,
 		canExit: false,
@@ -159,6 +166,13 @@ export default {
 			coins: 0,
 			food: 100,
 		},
+		attacker: { // melee
+			range: 1,
+			natural: {
+				damage: [5, 10],
+				damageType: 'ph',
+			},
+		},
 		inventory: {
 			contents: [],
 			max: 255,
@@ -169,15 +183,6 @@ export default {
 		factions: {
 			good: 10,
 			evil: 0,
-		},
-		fighter: {
-			// Preference for melee vs ranged?
-		},
-		attacker: { // melee
-			range: 1,
-		},
-		firer: { // ranged
-			range: 0,
 		},
 	},
 	king: {
@@ -192,6 +197,16 @@ export default {
 	sentry: {
 		type: 'actor',
 		sprite: 'spearman-2',
+	},
+	elf: {
+		type: 'actor',
+		sprite: 'elf-0',
+		plan: { randomMove: 0.5 },
+	},
+	dwarf: {
+		type: 'actor',
+		sprite: 'dwarf-0',
+		plan: { randomMove: 0.5 },
 	},
 	monster: {
 		type: 'actor',
@@ -209,8 +224,12 @@ export default {
 		},
 		attacker: { // melee
 			range: 1,
+			natural: {
+				damage: [1, 4],
+				damageType: 'ph',
+			},
 		},
-		firer: { // ranged
+		firer: { // ranged?
 			range: 0,
 		},
 		health: {
@@ -223,9 +242,17 @@ export default {
 		type: 'monster',
 		sprite: 'beastman-0',
 	},
-	horse: {
-		type: 'monster', // TODO: make an NPC
+	darkHorseman: {
+		type: 'monster',
 		sprite: 'horseback',
+	},
+	orc: {
+		type: 'monster',
+		sprite: 'orc-0',
+	},
+	wildman: {
+		type: 'monster',
+		sprite: 'wildman-0',
 	},
 
 	// ---- Items ----
@@ -233,5 +260,41 @@ export default {
 		type: 'entity',
 		isItem: true,
 		// TODO
+	},
+	carpet: {
+		type: 'item',
+		sprite: 'empty-carpet',
+	},
+	broom: {
+		type: 'item',
+		sprite: 'empty-broom',
+	},
+	horse: {
+		type: 'item', // TODO: make an NPC
+		sprite: 'horse',
+	},
+	sailboat: {
+		type: 'item',
+		sprite: 'empty-sailboat',
+	},
+	galleon: {
+		type: 'item',
+		sprite: 'empty-galleon',
+	},
+	weapon: {
+		type: 'item',
+		isWeapon: true,
+		equippable: {
+			slots: ['hand'],
+		},
+		attackable: {
+			range: 1,
+			damage: 1,
+			type: 'ph',
+		},
+	},
+	armor: {
+		type: 'item',
+		isArmor: true,
 	},
 };

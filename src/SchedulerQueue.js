@@ -16,12 +16,16 @@ export default class SchedulerQueue {
 	}
 
 	sort() {
+		// let display = this.queue.map((ent) => ([ent.name, ent.action.cooldown].join(': ')));
+		// console.log(display.join(', '));
 		this.queue.sort((a, b) => {
 			if (a.action.cooldown === b.action.cooldown) {
 				return (a.isAvatar) ? -1 : 0;
 			}
 			return a.action.cooldown - b.action.cooldown;
 		});
+		// display = this.queue.map((ent) => ([ent.name, ent.action.cooldown].join(': ')));
+		// console.log(display.join(', '));
 	}
 
 	top() {

@@ -1,6 +1,6 @@
 export default {
 	main: {
-		url: './images/wulf-spritesheet-8.png',
+		url: './images/wulf-spritesheet-10.png',
 		size: 16,
 		atlas: [
 			{ names: [
@@ -18,7 +18,9 @@ export default {
 			] },
 			{ names: [ // props and transportation
 				'ladder-down', 'ladder-up', 'magic-ladder-down', 'magic-ladder-up',
-				'horseback', 'flying-carpet', 'sailboat', 'galleon', 'flying-broom',
+				'horse', 'horseback', 'empty-sailboat', 'sailboat', 'empty-galleon', 'galleon',
+				'empty-carpet', 'flying-carpet', 'empty-broom', 'flying-broom',
+				'dead-skull', 'hit-splash', 'target-circle',
 			] },
 			{ names: [
 				'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
@@ -42,6 +44,16 @@ export default {
 					'king-0',
 				],
 			},
+			{ names: [
+				'orc-0', 'orc-1', 'orc-2', 'orc-3',
+				'wildman-0',
+			] },
+			{ names: [
+				'dwarf-0',
+			] },
+			{ names: [
+				'elf-0',
+			] },
 		],
 	},
 	fonts: {

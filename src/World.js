@@ -4,6 +4,7 @@ import WorldMap from './WorldMap.js';
 import SchedulerQueue from './SchedulerQueue.js';
 import WorldSaveLoadManager from './WorldSaveLoadManager.js';
 import Actions from './Actions.js';
+import { isAlive } from './actionUtilities.js';
 import { wait } from './utilities.js';
 
 export default class World {
@@ -31,7 +32,6 @@ export default class World {
 	}
 
 	async load() {
-		
 		const overworldMapId = this.maps.findIndex((map) => map.mapKey === 'overworld');
 		this.ents.addAvatar({
 			type: 'avatar',
@@ -132,11 +132,17 @@ export default class World {
 		return sprites;
 	}
 
+	makeVisibleThing(ent, startX, startY) { // eslint-disable-line class-methods-use-this
+		return [ent.sprite, ent.x - startX, ent.y - startY];
+	}
+
 	async getParty(whoId) {
 		const { centerVisibleWorldX, centerVisibleWorldY } = this.getVisibleWorldDimensions(whoId);
+		const avatarActor = this.getActor(whoId);
 		return {
 			avatar: {
-				...this.getActor(whoId),
+				...avatarActor,
+				sprite: isAlive(avatarActor) ? avatarActor.sprite : avatarActor.deadSprite,
 				visibleWorldX: centerVisibleWorldX,
 				visibleWorldY: centerVisibleWorldY,
 			},
@@ -171,15 +177,25 @@ export default class World {
 		if (!whoId) throw new Error('Need a whoId for getting visible world');
 		const { w, h, worldLeftX, worldTopY } = this.getVisibleWorldDimensions(whoId);
 		const mapId = this.getActorMapId(whoId);
+		// const map = this.getMap(mapId);
+		const allVisibleEnts = this.ents.getEntitiesOnMapRange(mapId, worldLeftX, worldTopY, w, h);
 		const visibleWorld = {
 			terrain: {
 				sprites: this.getTerrainSprites(mapId, worldLeftX, worldTopY, w, h),
 			},
-			props: {
-				sprites: this.getPropsSprites(mapId, worldLeftX, worldTopY, w, h),
-			},
-			items: [],
-			actors: [],
+			props: allVisibleEnts
+				.filter((ent) => ent.isProp || ent.isDestination)
+				.map((ent) => this.makeVisibleThing(ent, worldLeftX, worldTopY)),
+			items: allVisibleEnts
+				.filter((ent) => ent.isItem)
+				.map((ent) => this.makeVisibleThing(ent, worldLeftX, worldTopY)),
+			actors: allVisibleEnts
+				.filter((ent) => ent.isActor)
+				.map((ent) => {
+					const visibleActor = this.makeVisibleThing(ent, worldLeftX, worldTopY);
+					return isAlive(ent) ? visibleActor
+						: [ent.deadSprite, visibleActor[1], visibleActor[2]];
+				}),
 		};
 		return visibleWorld;
 	}
@@ -230,7 +246,7 @@ export default class World {
 	async sim(tStep = 1) {
 		this.time += tStep;
 		let stops = 0;
-		console.log('world sim', this.time);
+		// console.log('world sim', this.time);
 		const mapIds = this.getSimMapIds();
 		for (let i = 0; i < mapIds.length; i += 1) {
 			const mapId = mapIds[i];
@@ -266,19 +282,22 @@ export default class World {
 			// If avatar is next in line but doesn't have an action to perform,
 			// then stop and wait for input
 			if (topActor.isAvatar) {
-				console.log('\tTop actor is avatar and has nothing to do.', topActor);
+				console.log('Map Sim', map.time, 'Top actor is avatar and has nothing to do.');
 				return true;
 			}
-			this.actions.enqueue(topActor, 'plan');
+			console.log('Map Sim', map.time, topActor.name, 'planning');
+			this.actions.planAction(topActor);
 		}
+		// else console.log('Map Sim', map.time, 'Not waiting for action from', topActor.name);
 		const delta = await this.performAction(topActor, map.time);
-		if (!delta) return false; // Didn't do anything - just leave
-		// If delta was not a success, we could assume it did not change the world, and don't bother
-		// tracking it, but then we won't end up displaying failed actions to the user
-		// if (delta.success) this.deltas.push(delta);
-		// ... So instead we'll add all deltas for now. If this gets too noisy, reconsider this.
-		this.deltas.push(delta);
-		// action may have changed cooldowns, so need to resort
+		if (delta) {
+			// If delta was not a success, we could assume it did not change the world, and don't
+			// bother tracking it, but then we won't end up displaying failed actions to the user
+			// if (delta.success) this.deltas.push(delta);
+			// ... So instead we'll add all deltas for now. If this gets too noisy, reconsider this.
+			this.deltas.push(delta);
+		}
+		// action or planning may have changed cooldowns, so need to resort
 		q.sort();
 		return false;
 	}

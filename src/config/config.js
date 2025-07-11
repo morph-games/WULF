@@ -23,6 +23,20 @@ export default {
 		mainCanvasId: 'main-canvas',
 		height: SCREEN_HEIGHT,
 		width: SCREEN_WIDTH,
+		colors: {
+			blue: '#2bcfd6',
+			green: '#53d638',
+			violet: '#962ba5',
+			orange: '#d95e1c',
+			white: '#f1f1f1',
+			black: '#000000',
+		},
+	},
+	mapDisplay: {
+		w: 20,
+		h: 10,
+		offsetX: 0,
+		offsetY: 1,
 	},
 	mainConsole: {
 		horizontal: 'left',

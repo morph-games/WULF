@@ -63,4 +63,14 @@ export default class EntityManager {
 	getEntitiesOnMap(mapId) {
 		return this.all.filter((ent) => ent.mapId === mapId);
 	}
+
+	getEntitiesOnMapRange(mapId, startX = 0, startY = 0, w = 10, h = 10) {
+		const endX = startX + w;
+		const endY = startY + h;
+		return this.all.filter((ent) => (
+			ent.mapId === mapId
+			&& ent.x >= startX && ent.x < endX
+			&& ent.y >= startY && ent.y < endY
+		));
+	}
 }

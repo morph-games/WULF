@@ -14,8 +14,8 @@ export default class Game {
 		this.worldComm = new WorldCommunicator({ world: options.world, actions: options.actions });
 		this.commandIndex = 0;
 		this.mapFocus = [0, 0];
-		this.mapDisplaySizeX = 20;
-		this.mapDisplaySizeY = 10;
+		this.mapDisplaySizeX = options?.mapDisplay?.w;
+		this.mapDisplaySizeY = options?.mapDisplay?.h;
 		this.visibleWorld = {};
 		this.party = {};
 		this.avatarWhoId = null;
@@ -62,7 +62,8 @@ export default class Game {
 			}
 			const directedCommandWords = [...commandWords];
 			directedCommandWords[directionIndex] = directionCommand;
-			this.screen.mainConsole.print(capitalizeFirst(directionCommand)); // TODO: print at end of line
+			this.screen.mainConsole.print(capitalizeFirst(directionCommand));
+			// ^ TODO: print at end of line
 			this.switchToTravel();
 			this.executeCommand(directedCommandWords.join(' '));
 		});
@@ -111,7 +112,7 @@ export default class Game {
 
 	async executeCommand(commandString) {
 		await wait(10); // TODO: remove eventually
-		console.log('Client Command:', commandString);
+		console.log('\t\tClient Command:', commandString);
 		const aliases = {
 			vol: 'volume',
 		};
@@ -121,7 +122,7 @@ export default class Game {
 				if (direction === 'up') amount = 1;
 				else if (direction === 'down') amount = -1;
 				this.volume = Math.min(Math.max(this.volume + amount, VOLUME_MIN), VOLUME_MAX);
-				this.mainConsole.print(`Volume: ${this.volume}`);
+				this.screen.mainConsole.print(`Volume: ${this.volume}`);
 				// TODO: Make a beep noise so the user can see what the volume is like
 			},
 			switch: (stateName) => this.switchTo(stateName),
@@ -184,11 +185,11 @@ export default class Game {
 			// 'switch commands': 'list commands',
 		};
 		const commandLines = keyCommandsArray.map(({ key, command }, i) => {
-				const keyStr = KEY_REPLACEMENTS[key] || key;
-				const cmdStr = (COMMAND_REPLACEMENTS[command] || command)
-					.replaceAll('direction', 'dir');
-				const cursor = (this.commandIndex === i) ? '>' : ' ';
-				return `${cursor}(${keyStr}) ${cmdStr}`;
+			const keyStr = KEY_REPLACEMENTS[key] || key;
+			const cmdStr = (COMMAND_REPLACEMENTS[command] || command)
+				.replaceAll('direction', 'dir');
+			const cursor = (this.commandIndex === i) ? '>' : ' ';
+			return `${cursor}(${keyStr}) ${cmdStr}`;
 		});
 		this.screen.drawCommandColumns(commandLines);
 	}
@@ -220,7 +221,7 @@ export default class Game {
 			}
 		});
 		for (let i = messagesBackwards.length - 1; i >= 0; i -= 1) {
-			console.log('Print', messagesBackwards[i]);
+			console.log('\t\tPrint', messagesBackwards[i]);
 			this.screen.mainConsole.print(messagesBackwards[i]);
 		}
 	}

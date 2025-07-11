@@ -23,18 +23,37 @@ function testFontDraw(gCanvas) { // eslint-disable-line
 */
 
 export default class GameScreen {
-	constructor(options) {
-		this.screenWidth = options.screen?.width || 320;
-		this.screenHeight = options.screen?.height || 200;
-		this.screenSelector = options.screen?.containerSelector || '#wulf-screen';
-		this.mainCanvasId = options.screen?.mainCanvasId || 'wulf-main-canvas';
+	constructor(config = {}) {
+		this.colors = config.screen?.colors || { white: '#ffffff', black: '#000000' };
+		this.screenWidth = config.screen?.width || 320;
+		this.screenHeight = config.screen?.height || 200;
+		this.mapDisplayWidth = config?.mapDisplay?.w || 20;
+		this.mapDisplayHeight = config?.mapDisplay?.h || 10;
+		this.mapDisplayOffsetX = config?.mapDisplay?.offsetX || 0;
+		this.mapDisplayOffsetY = config?.mapDisplay?.offsetY || 0;
+		// const y = this.screenHeight - (config.mainConsole.fontSize * config.mainConsole.rows);
+		const lineY = (
+			(config.spritesheets?.main?.size || 16) * this.mapDisplayHeight
+		) + this.mapDisplayOffsetY;
+		const lineX = (
+			(config.mainConsole?.columns || 10) * (config.mainConsole?.fontSize || 8)
+		) - 1;
+		this.borderLines = [
+			// [0, 0, this.screenWidth, 0, 'blue'],
+			[0, lineY, this.screenWidth, lineY, this.colors.blue],
+			// [0, 0, 0, lineY, 'blue'],
+			// [this.screenWidth - 1, 0, this.screenWidth - 1, lineY, 'blue'],
+			[lineX, lineY, lineX, this.screenHeight, this.colors.blue],
+		];
+		this.screenSelector = config.screen?.containerSelector || '#wulf-screen';
+		this.mainCanvasId = config.screen?.mainCanvasId || 'wulf-main-canvas';
 		this.gameCanvas = new GameCanvas(this.mainCanvasId, [this.screenWidth, this.screenHeight]);
-		this.ss = new Spritesheet(options?.spritesheets?.main);
-		this.fontsSpritesheet = new Spritesheet(options?.spritesheets?.fonts);
+		this.ss = new Spritesheet(config?.spritesheets?.main);
+		this.fontsSpritesheet = new Spritesheet(config?.spritesheets?.fonts);
 		// this.textCtrl = new TextController(this.fontsSpritesheet);
-		this.mainConsole = new GameConsole(options?.mainConsole, this.fontsSpritesheet);
-		this.quickStatConsole = new GameConsole(options?.quickStatConsole, this.fontsSpritesheet);
-		this.commandConsoles = options.commandConsoles.map((commandConsoleOptions) => {
+		this.mainConsole = new GameConsole(config?.mainConsole, this.fontsSpritesheet);
+		this.quickStatConsole = new GameConsole(config?.quickStatConsole, this.fontsSpritesheet);
+		this.commandConsoles = config.commandConsoles.map((commandConsoleOptions) => {
 			return new GameConsole(commandConsoleOptions, this.fontsSpritesheet);
 		});
 	}
@@ -62,8 +81,8 @@ export default class GameScreen {
 		this.ss.drawImageToContext(
 			spriteName,
 			this.gameCanvas.ctx,
-			x * this.ss.spriteSize,
-			y * this.ss.spriteSize,
+			(x * this.ss.spriteSize) + this.mapDisplayOffsetX,
+			(y * this.ss.spriteSize) + this.mapDisplayOffsetY,
 		);
 	}
 
@@ -86,8 +105,11 @@ export default class GameScreen {
 		this.drawSprites2d(visibleWorld.terrain.sprites, 'terrain');
 	}
 
-	drawProps(visibleWorld) {
-		this.drawSprites2d(visibleWorld.props.sprites, 'terrain');
+	drawVisibleThings(visibleThingsArray = []) {
+		visibleThingsArray.forEach((visibleThing) => {
+			const [sprite, x, y] = visibleThing;
+			this.drawSprite(sprite, x, y);
+		});
 	}
 
 	drawParty(party) {
@@ -97,11 +119,16 @@ export default class GameScreen {
 
 	drawMap(visibleWorld, party) {
 		this.drawTerrain(visibleWorld);
-		this.drawProps(visibleWorld);
-		// TODO: draw items
-		// TODO: draw borders
-		// TODO: draw actors
+		this.drawVisibleThings(visibleWorld.items);
+		this.drawVisibleThings(visibleWorld.props);
+		this.drawVisibleThings(visibleWorld.actors);
 		this.drawParty(party);
+		// ^ Currently is redundant, but ensures that character is draw on top
+		// this.gameCanvas.removePixelTransparency();
+		this.borderLines.forEach((line) => {
+			// this.gameCanvas.drawLine(0, 0, this.gameCanvas.width, 0, this.colors.blue);
+			this.gameCanvas.drawLine(...line);
+		});
 	}
 
 	drawAll(visibleWorld, party) {
