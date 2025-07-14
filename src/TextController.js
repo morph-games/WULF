@@ -1,8 +1,10 @@
 export default class TextController {
-	constructor(fontsSpritesheet) {
+	constructor(fontsSpritesheet, options = {}) {
 		this.fss = fontsSpritesheet;
 		this.cursorRow = 0;
 		this.cursorCol = 0;
+		this.offsetX = options.offsetX || 0;
+		this.offsetY = options.offsetY || 0;
 		if (!fontsSpritesheet) throw new Error('Missing fonts spritesheet');
 	}
 
@@ -42,8 +44,8 @@ export default class TextController {
 			this.fss.drawImageToContext(
 				letter,
 				ctx,
-				this.cursorCol * this.fss.spriteSize,
-				this.cursorRow * this.fss.spriteSize,
+				(this.cursorCol * this.fss.spriteSize) + this.offsetX,
+				(this.cursorRow * this.fss.spriteSize) + this.offsetY,
 			);
 		} catch (err) {
 			// If we don't find the letter, then just skip it

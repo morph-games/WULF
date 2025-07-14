@@ -13,6 +13,10 @@ export default {
 	},
 	void: { type: 'terrain', sprite: 'void', obstacleId: 0 },
 	dirt: { type: 'terrain', sprite: 'dirt', obstacleId: 6 },
+	floor2: { type: 'terrain', sprite: 'floor-2', obstacleId: 7 },
+	floor3: { type: 'terrain', sprite: 'floor-3', obstacleId: 7 },
+	floor4: { type: 'terrain', sprite: 'floor-4', obstacleId: 7 },
+	floor5: { type: 'terrain', sprite: 'floor-5', obstacleId: 7 },
 	grass: {
 		type: 'terrain',
 		sprite: 'grass-0',
@@ -40,6 +44,11 @@ export default {
 	wall: {
 		type: 'terrain',
 		sprite: 'stone-wall-0',
+		obstacleId: 1,
+	},
+	darkWall: {
+		type: 'terrain',
+		sprite: 'dark-stone-0',
 		obstacleId: 1,
 	},
 	door: {
@@ -99,6 +108,8 @@ export default {
 	},
 	ladderDown: { type: 'prop', sprite: 'ladder-down', klimbable: { speed: 1, direction: 'down' } },
 	ladderUp: { type: 'prop', sprite: 'ladder-up', klimbable: { speed: 1, direction: 'up' } },
+	torch: { type: 'prop', sprite: 'torch-0' },
+	pillar: { type: 'prop', sprite: 'pillar-0' },
 
 	// ---- Actors ----
 	actor: {
@@ -189,24 +200,33 @@ export default {
 		type: 'actor',
 		sprite: 'king-0',
 	},
-	guard: {
+	wanderer: {
 		type: 'actor',
-		sprite: 'spearman-2',
+		sprite: 'man-0',
 		plan: { randomMove: 0.5 },
+	},
+	man: {
+		type: 'wanderer',
+	},
+	woman: {
+		type: 'wanderer',
+		sprite: 'woman-0',
+	},
+	guard: {
+		type: 'wanderer',
+		sprite: 'spearman-2',
 	},
 	sentry: {
 		type: 'actor',
 		sprite: 'spearman-2',
 	},
 	elf: {
-		type: 'actor',
+		type: 'wanderer',
 		sprite: 'elf-0',
-		plan: { randomMove: 0.5 },
 	},
 	dwarf: {
-		type: 'actor',
+		type: 'wanderer',
 		sprite: 'dwarf-0',
-		plan: { randomMove: 0.5 },
 	},
 	monster: {
 		type: 'actor',
@@ -259,6 +279,10 @@ export default {
 	item: {
 		type: 'entity',
 		isItem: true,
+		value: {
+			valueMultiplier: 0, // 1 for normal items, <1 for junk, >1 for treasures
+		},
+		// LATER: weight
 		// TODO
 	},
 	carpet: {
@@ -285,7 +309,7 @@ export default {
 		type: 'item',
 		isWeapon: true,
 		equippable: {
-			slots: ['hand'],
+			slots: ['anyHand'],
 		},
 		attackable: {
 			range: 1,
@@ -296,5 +320,6 @@ export default {
 	armor: {
 		type: 'item',
 		isArmor: true,
+		// TODO: Where can it be worn
 	},
 };

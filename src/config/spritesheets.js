@@ -1,6 +1,6 @@
 export default {
 	main: {
-		url: './images/wulf-spritesheet-10.png',
+		url: './images/wulf-spritesheet-11.png',
 		size: 16,
 		atlas: [
 			{ names: [
@@ -8,19 +8,23 @@ export default {
 				'forest-0', 'forest-1', 'forest-2', 'forest-3',
 				'mountain-0', 'mountain-1', 'mountain-2', 'mountain-3',
 				'mountain-door', 'circle', 'village', 'town', 'city',
+				'', 'faded-place', 'place',
 			] },
 			{ names: [
 				'water-0', 'void', '', '', '', '', '', '', 'water-1', '', '', '', '', '', '', '',
-				'stone-wall-0', 'stone-wall-1', 'stone-door-open', 'stone-window',
+				'ladder-down', 'ladder-up', 'magic-ladder-down', 'magic-ladder-up',
 			] },
 			{ names: [
 				'dirt', 'floor-0', 'floor-1', 'floor-2', 'floor-3', 'floor-4', 'floor-5', 'floor-6',
+				'', '', '', '', '', '', '', '',
+				'pillar-0', 'torch-0', 'torch-1', 'torch-2',
 			] },
 			{ names: [ // props and transportation
-				'ladder-down', 'ladder-up', 'magic-ladder-down', 'magic-ladder-up',
-				'horse', 'horseback', 'empty-sailboat', 'sailboat', 'empty-galleon', 'galleon',
-				'empty-carpet', 'flying-carpet', 'empty-broom', 'flying-broom',
-				'dead-skull', 'hit-splash', 'target-circle',
+				'stone-wall-0', 'stone-wall-1', 'stone-door-open', 'stone-window',
+				'stone-sign-left', 'stone-sign-right',
+				'dark-stone-0', 'dark-stone-1',
+				'dark-stone-to-stone', 'stone-to-dark-stone',
+				'green-stone',
 			] },
 			{ names: [
 				'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
@@ -35,13 +39,20 @@ export default {
 				'rune-O', 'rune-P', 'rune-Q', 'rune-R', 'rune-S', 'rune-T', 'rune-U',
 				'rune-V', 'rune-W', 'rune-X', 'rune-Y', 'rune-Z',
 				'rune-TH', 'rune-EE', 'rune-NG', 'rune-EA', 'rune-ST', 'rune-space',
-				'stone-sign-left', 'stone-sign-right',
+				'', '',
 			] }, // Letters 3
+			{ names: [ // props and transportation
+				'horse', 'horseback', 'empty-sailboat', 'sailboat', 'empty-galleon', 'galleon',
+				'empty-carpet', 'flying-carpet', 'empty-broom', 'flying-broom',
+				'dead-skull', 'hit-splash', 'target-circle',
+			] },
 			{
 				names: [
 					'spearman-0', 'spearman-1', 'spearman-2', 'spearman-3',
 					'beastman-0', '', '', '',
-					'king-0',
+					'king-0', '', '', '',
+					'man-0', '', '', '',
+					'woman-0', '', '', '',
 				],
 			},
 			{ names: [

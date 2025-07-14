@@ -258,6 +258,7 @@ export default class Game {
 		await this.sendWorldCommand('ping', this.avatarWhoId); // needed to load the map
 
 		this.drawMap();
+		this.inputCtrl.setup();
 		this.switchToTravel();
 	}
 

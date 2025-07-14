@@ -4,6 +4,7 @@ import entityTypes from './entityTypes.js';
 import overworld from './maps/overworld.js';
 import castle1 from './maps/castle1.js';
 import castle1B from './maps/castle1B.js';
+import dungeon1 from './maps/dungeon1.js';
 
 const FONT_SIZE = 8;
 const SCREEN_WIDTH_LETTERS = SCREEN_WIDTH / FONT_SIZE;
@@ -45,13 +46,17 @@ export default {
 		columns: SCREEN_WIDTH_LETTERS - 10, // 'max',
 		cursor: '>',
 		fontSize: FONT_SIZE,
+		offsetX: 0,
+		offsetY: -2,
 	},
 	quickStatConsole: {
 		horizontal: 'right',
 		vertical: 'bottom',
 		rows: 4,
-		columns: 10,
+		columns: 9,
 		fontSize: FONT_SIZE,
+		offsetX: -2,
+		offsetY: -2,
 	},
 	commandConsoles: [
 		{
@@ -94,6 +99,7 @@ export default {
 			overworld,
 			castle1,
 			castle1B,
+			dungeon1,
 		},
 		globalLegend: {
 			'.': ['grass'],
@@ -102,8 +108,11 @@ export default {
 			'^': ['mountain'],
 			'f': ['forest'],
 			'-': ['floor'],
+			'*': ['floor', 'torch'],
+			'|': ['floor', 'pillar'],
 			'#': ['wall'],
 			'B': ['grass', 'beastman'],
+			'O': ['grass', 'orc'],
 		},
 		timing: { // How many time units do certain things cooldown after
 			actionCooldown: 20,

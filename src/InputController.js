@@ -10,7 +10,7 @@ export default class InputController {
 	setup(selector = 'button') {
 		document.querySelectorAll(selector).forEach((elt) => {
 			if (!elt.dataset.key) return;
-			elt.addEventListener('click', (e) => {
+			elt.addEventListener('click', () => {
 				this.kbCommander.triggerKey(elt.dataset.key);
 			});
 		});

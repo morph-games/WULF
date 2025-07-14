@@ -9,11 +9,14 @@ export default class GameConsole {
 		this.fontSize = options.fontSize || 8;
 		this.columns = options.columns || 'max';
 		this.rows = options.rows || 4;
+		this.offsetX = options.offsetX || 0;
+		this.offsetY = options.offsetY || 0;
 		this.inputLine = (typeof options.inputLine === 'undefined') ? true : Boolean(options.inputLine);
 		this.textRows = this.rows - (this.inputLine ? 1 : 0);
 		this.cursor = options.cursor || '';
 		this.gameCanvas = options.gameCanvas; // likely null at this point
-		this.textCtrl = new TextController(fontsSpritesheet);
+		const { offsetX, offsetY } = this;
+		this.textCtrl = new TextController(fontsSpritesheet, { offsetX, offsetY });
 		this.log = [];
 	}
 

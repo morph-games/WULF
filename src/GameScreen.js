@@ -37,7 +37,7 @@ export default class GameScreen {
 		) + this.mapDisplayOffsetY;
 		const lineX = (
 			(config.mainConsole?.columns || 10) * (config.mainConsole?.fontSize || 8)
-		) - 1;
+		) + 1;
 		this.borderLines = [
 			// [0, 0, this.screenWidth, 0, 'blue'],
 			[0, lineY, this.screenWidth, lineY, this.colors.blue],
