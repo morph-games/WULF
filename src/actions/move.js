@@ -1,11 +1,23 @@
 import { isAlive } from '../actionUtilities.js';
 import { COORDINATE_MAP } from '../constants.js';
+import { isHungry, eatMoveMeal } from './eat.js';
+
+function moveSideEffects(actor) {
+	if (actor.isAvatar) {
+		actor.movesCount = (actor.movesCount || 0) + 1;
+	}
+	eatMoveMeal(actor);
+	if (typeof actor?.experience?.totalXp === 'number') {
+		actor.experience.totalXp += 1;
+	}
+}
 
 function moveOffEdge(actor, map, edge, newX, newY, direction) {
 	if (!actor.canExit) return [false, 'You cannot exit.'];
 	const exitValue = map.getExit(edge);
 	if (exitValue instanceof Array) {
 		// this.moveActorMap(actor, exitValue);
+		moveSideEffects(actor);
 		return {
 			success: true,
 			message: `You leave ${map.getName()}.`,
@@ -19,6 +31,7 @@ function moveOffEdge(actor, map, edge, newX, newY, direction) {
 		const [x, y] = map.getLoopedCoordinates(newX, newY);
 		actor.x = x;
 		actor.y = y;
+		moveSideEffects(actor);
 		return [true, `You move ${direction}`];
 	}
 	return [false, 'You cannot move.'];
@@ -47,10 +60,14 @@ function move(actor, map, mapEnts, direction) {
 	if (!minTransversal) return [false, `Blocked ${direction}.`];
 	actor.x = newX;
 	actor.y = newY;
+	moveSideEffects(actor);
+	const HUNGRY_COOLDOWN_MULTIPLIER = 2; // TODO: Get this from config
+	const cooldownMultiplier = (1 / minTransversal)
+		* (isHungry(actor) ? HUNGRY_COOLDOWN_MULTIPLIER : 1);
 	return {
 		success: true,
 		message: `You move ${direction}.`,
-		cooldownMultiplier: (1 / minTransversal),
+		cooldownMultiplier,
 	};
 }
 

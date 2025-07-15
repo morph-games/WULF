@@ -96,6 +96,20 @@ export default {
 			'', // 16
 		],
 		entityTypes,
+		mapTypes: {
+			overworld: {
+				moveMealMultiplier: 1,
+				moveXpMultiplier: 1,
+			},
+			civilization: {
+				moveMealMultiplier: 0,
+				moveXpMultiplier: 0,
+			},
+			dungeon: {
+				moveMealMultiplier: 1,
+				moveXpMultiplier: 1,
+			},
+		},
 		maps: {
 			overworld,
 			castle1,

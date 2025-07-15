@@ -137,7 +137,7 @@ export default class GameScreen {
 			`H.P.:${GameScreen.getPrintableNumber(party?.avatar?.health?.hp, 4)}`,
 			`Coin:${GameScreen.getPrintableNumber(party?.avatar?.currencies?.coins, 4)}`,
 			`Food:${GameScreen.getPrintableNumber(party?.avatar?.currencies?.food, 4)}`,
-			`X.P.:${GameScreen.getPrintableNumber(party?.avatar?.xp?.totalXp, 4)}`,
+			`X.P.:${GameScreen.getPrintableNumber(party?.avatar?.experience?.totalXp, 4)}`,
 		]);
 	}
 

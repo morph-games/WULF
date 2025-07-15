@@ -146,7 +146,7 @@ export default {
 		},
 		currencies: {
 			coins: 0,
-			food: 100,
+			food: 10,
 		},
 		inventory: {
 			contents: [],
@@ -165,6 +165,7 @@ export default {
 		sprite: 'spearman-0',
 		canEnter: true,
 		canExit: true,
+		movesCount: 0,
 		klimber: {
 			speed: 1,
 		},
@@ -175,7 +176,10 @@ export default {
 		},
 		currencies: {
 			coins: 0,
-			food: 100,
+			food: 99,
+		},
+		eater: {
+			moveMeal: 1,
 		},
 		attacker: { // melee
 			range: 1,
@@ -188,7 +192,7 @@ export default {
 			contents: [],
 			max: 255,
 		},
-		xp: {
+		experience: {
 			totalXp: 0,
 		},
 		factions: {
