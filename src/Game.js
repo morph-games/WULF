@@ -21,6 +21,7 @@ export default class Game {
 		this.avatarWhoId = null;
 		this.renderWorldTime = 0; // the world time that we are rendered up to
 		this.volume = 5;
+		this.settings = structuredClone(options.settings);
 	}
 
 	static waitForDom() {
@@ -166,28 +167,24 @@ export default class Game {
 	}
 
 	getStateKeyCommands(stateName) {
-		const { kb = {}, hideCommands = [] } = this.states[stateName];
+		const { kb = {}, hideCommands = [], keyHelp = {} } = this.states[stateName];
 		return Object.keys(kb)
 			.filter((key) => !hideCommands.includes(key))
-			.map((key) => ({ key, command: kb[key] }));
+			.map((key) => ({ key, command: kb[key], keyHelp: keyHelp[key] }));
 	}
 
 	drawKeyCommandsScreen(stateName) {
 		const keyCommandsArray = this.getStateKeyCommands(stateName);
-		const KEY_REPLACEMENTS = {
+		const KEY_REPLACEMENTS = { // TODO: internationalize this
 			ArrowUp: 'Up',
 			ArrowDown: 'Down',
 			ArrowLeft: 'Left',
 			ArrowRight: 'Right',
 			' ': 'Space',
 		};
-		const COMMAND_REPLACEMENTS = {
-			// 'switch commands': 'list commands',
-		};
-		const commandLines = keyCommandsArray.map(({ key, command }, i) => {
+		const commandLines = keyCommandsArray.map(({ key, command, keyHelp = {} }, i) => {
 			const keyStr = KEY_REPLACEMENTS[key] || key;
-			const cmdStr = (COMMAND_REPLACEMENTS[command] || command)
-				.replaceAll('direction', 'dir');
+			const cmdStr = (keyHelp[this.settings.language] || command);
 			const cursor = (this.commandIndex === i) ? '>' : ' ';
 			return `${cursor}(${keyStr}) ${cmdStr}`;
 		});
@@ -248,8 +245,7 @@ export default class Game {
 		await Game.waitForDom();
 		await this.screen.setup();
 
-		this.screen.mainConsole.print('A flash of red...');
-		this.screen.mainConsole.print('You have awoken in a strange world.');
+		this.screen.mainConsole.print('You enter a swirling gateway, and awaken in a strange world.');
 
 		this.loadGame();
 

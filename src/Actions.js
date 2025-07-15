@@ -169,7 +169,7 @@ function peer(actor, map, mapEnts) {
 function plan(actor, map, mapEnts) {
 	if (!actor.plan) {
 		Actions.enqueueWithoutWarmup(actor, 'pass');
-		return [false, 'No thinking.'];
+		return { success: false, quiet: true, message: 'No thinking.' };
 	}
 	const {
 		randomMove = 0.5,
@@ -209,7 +209,7 @@ function plan(actor, map, mapEnts) {
 	} else {
 		Actions.enqueueWithoutWarmup(actor, 'pass');
 	}
-	return [true, ''];
+	return { success: true, message: 'Plan success', quiet: true };
 }
 
 function push(actor, map, mapEnts, direction) {
@@ -356,7 +356,7 @@ export default class Actions {
 		actor.action.queue.push([actionName, actionParamsString]);
 	}
 
-	planAction(actor) {
+	enqueuePlan(actor) {
 		// console.log(actor.name, 'plans', isAlive(actor));
 		if (!isAlive(actor)) {
 			Actions.handleDeadActor(actor);
@@ -374,7 +374,7 @@ export default class Actions {
 
 	perform(actor, map, mapEnts, timeNow) {
 		if (!Actions.hasReadyAction(actor, timeNow)) {
-			return [false, 'No ready actions.'];
+			return parseActionResult([false, 'No ready actions.']);
 		}
 		const { action } = actor;
 		const actionArray = action.queue.shift();
@@ -387,12 +387,13 @@ export default class Actions {
 		const actionResult = this.runAction(actionName, actor, map, mapEnts, actionParamsString);
 		const { success, cooldownMultiplier } = actionResult;
 		if (success) {
-			const cd = (
-				this.getCooldownTime(actionName, actionParamsString)
-				* cooldownMultiplier
+			const cd = Math.max(
+				Math.round(this.getCooldownTime(actionName, actionParamsString)
+					* cooldownMultiplier),
+				1,
 			);
 			// console.log(actionName, cd);
-			action.cooldown += cd;
+			action.cooldown = Math.ceil(timeNow + cd);
 		}
 		// console.log(actor.entId, actor, result);
 		return actionResult;

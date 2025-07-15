@@ -27,6 +27,7 @@ export default class World {
 		this.schedulerQueues = {}; // Add objects keyed off the maps
 		this.worldLog = [];
 		this.deltas = [];
+		this.maxDeltas = 99;
 		this.ents.allAllFromMaps(this.maps);
 		this.saveLoadManager = new WorldSaveLoadManager();
 	}
@@ -253,8 +254,13 @@ export default class World {
 			const map = this.getMap(mapId);
 			// Keep simulating the map until we catch up with world time, or we are asked to stop
 			let stop = false;
+			let timeDiff;
 			while (map.time < this.time && !stop) {
-				stop = await this.simMap(mapId, tStep); // eslint-disable-line no-await-in-loop
+				timeDiff = this.time - map.time;
+				// If we want to allow full simulation to catch-up to world time, then
+				// we can change the tStep for simMap here to world's tStep (1) rather than
+				// using this diff.
+				stop = await this.simMap(mapId, timeDiff); // eslint-disable-line no-await-in-loop
 			}
 			if (stop) stops += 1;
 		}
@@ -268,6 +274,8 @@ export default class World {
 	}
 
 	async simMap(mapId, tStep) {
+		if (tStep < 0) throw new Error('Invalid time step');
+		if (tStep > 1) console.log('Simulating map', tStep, 'steps to get to', this.time);
 		const map = this.getMap(mapId);
 		map.time = Math.min(this.time, map.time + tStep);
 		// console.log('\tMap', mapId, 'sim', map.time);
@@ -278,6 +286,7 @@ export default class World {
 		}
 		const q = this.schedulerQueues[mapId];
 		const topActor = q.top();
+		// Is the top actor's action queue empty? If so, then they need to make a plan
 		if (Actions.isWaitingForAction(topActor, map.time)) {
 			// If avatar is next in line but doesn't have an action to perform,
 			// then stop and wait for input
@@ -285,17 +294,23 @@ export default class World {
 				console.log('Map Sim', map.time, 'Top actor is avatar and has nothing to do.');
 				return true;
 			}
-			console.log('Map Sim', map.time, topActor.name, 'planning');
-			this.actions.planAction(topActor);
+			this.actions.enqueuePlan(topActor);
+			// console.log('Map Sim', map.time, topActor.name, 'queued a plan', topActor.action.cooldown);
 		}
-		// else console.log('Map Sim', map.time, 'Not waiting for action from', topActor.name);
+		// console.log('Map Sim', map.time, topActor.name, topActor.whoId,
+		// 'performing action', topActor.action);
 		const delta = await this.performAction(topActor, map.time);
 		if (delta) {
-			// If delta was not a success, we could assume it did not change the world, and don't
-			// bother tracking it, but then we won't end up displaying failed actions to the user
-			// if (delta.success) this.deltas.push(delta);
-			// ... So instead we'll add all deltas for now. If this gets too noisy, reconsider this.
-			this.deltas.push(delta);
+			if (delta.quiet) {
+				// If delta was not a success, we could assume it did not change the world, and
+				// don't need to  track it, but then we wouldn't display failed actions to the user
+				// so we also have to consider 'quiet'.
+			} else {
+				this.deltas.push(delta);
+				if (this.deltas.length > this.maxDeltas) {
+					this.deltas.splice(0, this.deltas.length - this.maxDeltas);
+				}
+			}
 		}
 		// action or planning may have changed cooldowns, so need to resort
 		q.sort();

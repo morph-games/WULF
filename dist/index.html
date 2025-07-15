@@ -5,8 +5,8 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>WULF</title>
 		<link rel="preload" href="./assets/AppleII-O06mxf_v.ttf" as="font" type="font/ttf" crossorigin />
-		<script type="module" crossorigin src="./assets/index-Dyh8AKiU.js"></script>
-		<link rel="stylesheet" crossorigin href="./assets/index-BDcuk2xJ.css">
+		<script type="module" crossorigin src="./assets/index-Da1oUZhB.js"></script>
+		<link rel="stylesheet" crossorigin href="./assets/index-CIRpCXWR.css">
 	</head>
 	<body>
 		<main>
@@ -15,15 +15,19 @@
 				<canvas id="main-canvas" width="320" height="200"></canvas>
 			</div>
 			<div id="buttons">
-				<button data-key="ArrowUp">▲</button>
-				<button data-key="ArrowLeft">◀</button>
-				<button data-key="ArrowDown">▼</button>
-				<button data-key="ArrowRight">▶</button>
-				<button data-key="e">e</button>
-				<button data-key="t">t</button>
-				<button data-key="f">f</button>
-				<button data-key="?">?</button>
-				<button data-key="Enter">&crarr;</button>
+				<div id="dir-buttons">
+					<button class="up-key" data-key="ArrowUp">▲</button>
+					<button class="left-key" data-key="ArrowLeft">◀</button>
+					<button class="down-key" data-key="ArrowDown">▼</button>
+					<button class="right-key" data-key="ArrowRight">▶</button>
+				</div>
+				<div>
+					<button data-key="?">?</button>
+					<button data-key="Enter">&crarr;</button>
+					<button data-key="t">t</button>
+					<button data-key="e">e</button>
+					<button data-key="f">f</button>
+				</div>
 			</div>
 		</main>
 	</body>

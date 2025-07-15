@@ -14,15 +14,19 @@
 				<canvas id="main-canvas" width="320" height="200"></canvas>
 			</div>
 			<div id="buttons">
-				<button data-key="ArrowUp">▲</button>
-				<button data-key="ArrowLeft">◀</button>
-				<button data-key="ArrowDown">▼</button>
-				<button data-key="ArrowRight">▶</button>
-				<button data-key="e">e</button>
-				<button data-key="t">t</button>
-				<button data-key="f">f</button>
-				<button data-key="?">?</button>
-				<button data-key="Enter">&crarr;</button>
+				<div id="dir-buttons">
+					<button class="up-key" data-key="ArrowUp">▲</button>
+					<button class="left-key" data-key="ArrowLeft">◀</button>
+					<button class="down-key" data-key="ArrowDown">▼</button>
+					<button class="right-key" data-key="ArrowRight">▶</button>
+				</div>
+				<div>
+					<button data-key="?">?</button>
+					<button data-key="Enter">&crarr;</button>
+					<button data-key="t">t</button>
+					<button data-key="e">e</button>
+					<button data-key="f">f</button>
+				</div>
 			</div>
 		</main>
 		<script type="module" src="/src/main.js"></script>

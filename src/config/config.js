@@ -17,6 +17,7 @@ export default {
 	settings: {
 		bumpCombat: 1,
 		autoEnter: 0,
+		language: 'en',
 	},
 	spritesheets,
 	screen: {
@@ -215,8 +216,14 @@ export default {
 				F1: 'abort',
 			},
 		},
-		navigate: { // Navigate
-
+		navigate: {
+			kb: {
+				ArrowUp: 'previous',
+				ArrowDown: 'next',
+				ArrowLeft: 'previous',
+				ArrowRight: 'next',
+				// ???
+			},
 		},
 		travel: {
 			hideCommands: ['/', '0', '1', '=', 'G', 'Q', 'Enter'],
@@ -306,6 +313,10 @@ export default {
 				'?': 'see commands',
 				F1: 'see commands',
 			},
+			keyHelp: {
+				e: { en: 'enter/engage' },
+				f: { en: 'fight dir.' },
+			},
 		},
 	},
 	actions: {
@@ -337,7 +348,8 @@ export default {
 		pass: { cooldown: 1 },
 		pickpocket: { cooldown: 0.5, warmup: 2 },
 		peer: { cooldown: 1 },
-		plan: { cooldown: 1 },
+		plan: { cooldown: 0.2 },
+		// ^ Since planning takes time, all NPCs will be a bit slower than player characters
 		push: { cooldown: 1 },
 		ready: { cooldown: 0.9 },
 		summon: { cooldown: 1 },
