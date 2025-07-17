@@ -1,7 +1,7 @@
 /* eslint-disable quote-props */
 export default {
 	name: 'Lands of Lord Lunic',
-	scale: 'overworld',
+	mapType: 'overworld',
 	map: [
 		'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
 		'~~~~~.......f~~~....~~~~~~~~~~~',

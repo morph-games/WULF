@@ -1,6 +1,7 @@
 /* eslint-disable quote-props */
 export default {
 	name: 'Dungeon',
+	mapType: 'dungeon',
 	map: [
 		'#####################',
 		'#####################',

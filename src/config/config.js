@@ -100,14 +100,17 @@ export default {
 			overworld: {
 				moveMealMultiplier: 1,
 				moveXpMultiplier: 1,
+				scale: 'overworld',
 			},
 			civilization: {
 				moveMealMultiplier: 0,
 				moveXpMultiplier: 0,
+				scale: 'personal',
 			},
 			dungeon: {
 				moveMealMultiplier: 1,
 				moveXpMultiplier: 1,
+				scale: 'personal',
 			},
 		},
 		maps: {
@@ -285,12 +288,12 @@ export default {
 				n: 'navigate', // New idea: Select discovered towns/cities/dungeons/sites and fast travel or get guidance lines or direction
 				// n: 'negate time', // U2-3: negate time with item
 				// n: 'new order', // U4-5: New order of party members
-				o: 'open direction', // General action for opening doors, coffins, chests (use for opening shops and opening pockets for stealing?)
+				o: 'open nearby', // General action for opening doors, coffins, chests (use for opening shops and opening pockets for stealing?)
 				// o: 'open coffin', // U1: too specific
 				// o: 'offer gold', // U2: Offer gold as payment or bribe
 				// o: 'other commands', // U3: type in other commands like bribe, pay
 				// o: 'open door', // U4-5: too specific
-				p: 'pickpocket', // New - same as steal in U1
+				p: 'pickpocket nearby', // New - same as steal in U1
 				// p: 'peer', // U3, U4: Peer at a gem (view map)
 				// p: 'push or pull' // U5
 				q: 'quicksave',
@@ -301,7 +304,7 @@ export default {
 				// - s = Move backwards
 				// - s = U1: Steal
 				// - s = U4, U5: search
-				t: 'talk', // More general form of transact/talk
+				t: 'talk nearby', // More general form of transact/talk
 				// - t = U1: transact (talk) + direction
 				// - t = U4, U5: talk + type keyword
 				u: 'use item', // U4, U5: Use item
@@ -329,7 +332,11 @@ export default {
 			},
 			keyHelp: {
 				e: { en: 'enter/engage' },
-				f: { en: 'fight dir.' },
+				f: { en: 'fight' },
+				l: { en: 'look' },
+				o: { en: 'open' },
+				p: { en: 'pickpocket' },
+				t: { en: 'talk' },
 			},
 		},
 	},

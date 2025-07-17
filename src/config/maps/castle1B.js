@@ -1,6 +1,7 @@
 /* eslint-disable quote-props */
 export default {
 	name: 'Castle Albarix Cellar',
+	mapType: 'civilization',
 	map: [
 		'###################',
 		'#~~#-----------#~~#',

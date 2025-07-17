@@ -15,13 +15,15 @@ export default class WorldMap {
 	}
 
 	/** Make an array of world maps (alphabetized) */
-	static makeMaps(objectOfManyMaps = {}, globalLegend = {}, entityTypes = null) {
+	static makeMaps(objectOfManyMaps = {}, globalLegend = {}, mapTypes = {}, entityTypes = null) {
 		const maps = [];
 		const manyMapKeys = Object.keys(objectOfManyMaps).sort();
 		manyMapKeys.forEach((mapKey) => {
 			const id = maps.length;
+			const mapData = objectOfManyMaps[mapKey];
+			const mapType = mapTypes[mapData?.mapType] || null;
 			const map = new WorldMap(
-				{ ...objectOfManyMaps[mapKey], mapKey, id },
+				{ ...mapType, ...mapData, mapKey, id },
 				globalLegend,
 				entityTypes,
 			);
