@@ -121,9 +121,10 @@ export default {
 			queue: [], // array of actions [actionName, params] to do next
 			cooldown: 1,
 		},
-		move: {
+		mover: {
 			speed: 1,
 			transversal: [1, 0, 0, 0, 0.5, 1, 1.1, 1.2, 0.5, 0.9, 0.8, 0, 0, 0, 0],
+			movesCount: 0,
 		},
 		health: {
 			hp: 99,
@@ -155,20 +156,15 @@ export default {
 		equipment: {
 			// ?
 		},
-		canEnter: false,
-		canExit: false,
 		obstacleId: 13,
 	},
 	avatar: {
 		type: 'actor',
 		isAvatar: true,
 		sprite: 'spearman-0',
-		canEnter: true,
-		canExit: true,
-		movesCount: 0,
-		klimber: {
-			speed: 1,
-		},
+		enterer: { speed: 1 },
+		exitor: { speed: 1 },
+		klimber: { speed: 1 },
 		health: {
 			hp: 99,
 			hpMax: 99,
@@ -194,6 +190,7 @@ export default {
 		},
 		experience: {
 			totalXp: 0,
+			killXp: 100,
 		},
 		factions: {
 			good: 10,
@@ -231,6 +228,17 @@ export default {
 	dwarf: {
 		type: 'wanderer',
 		sprite: 'dwarf-0',
+		buyer: {
+			any: ['item'],
+		},
+		seller: {
+			types: [
+				'dagger', 'mace', 'axe', 'ropeAndSpikes',
+				'sword', 'greatSword',
+				'bow', 'amulet', 'wand', 'staff',
+			],
+			movesCountGate: [0, 0, 0, 0, 1500, 1500, 3000, 3000, 3000, 3000],
+		},
 	},
 	monster: {
 		type: 'actor',
@@ -265,18 +273,26 @@ export default {
 	beastman: {
 		type: 'monster',
 		sprite: 'beastman-0',
+		currencies: { coins: [0, 10], food: 0 },
+		experience: { killXp: 10 },
 	},
 	darkHorseman: {
 		type: 'monster',
 		sprite: 'horseback',
+		currencies: { coins: [0, 10], food: [0, 10] },
+		experience: { killXp: 10 },
 	},
 	orc: {
 		type: 'monster',
 		sprite: 'orc-0',
+		currencies: { coins: [0, 10], food: [0, 10] },
+		experience: { killXp: 10 },
 	},
 	wildman: {
 		type: 'monster',
 		sprite: 'wildman-0',
+		currencies: { coins: [0, 10], food: 0 },
+		experience: { killXp: 10 },
 	},
 
 	// ---- Items ----
@@ -321,9 +337,25 @@ export default {
 			type: 'ph',
 		},
 	},
+	dagger: { attackable: { damage: 8, range: 1, type: 'ph' }, valuable: { value: 1 } },
+	mace: { attackable: { damage: 16, range: 1, type: 'ph' }, valuable: { value: 1 } },
+	axe: { attackable: { damage: 24, range: 1, type: 'ph' }, valuable: { value: 1 } },
+	ropeAndSpikes: { attackable: { damage: 1, range: 1, type: 'ph' }, valuable: { value: 1 } },
+	sword: { attackable: { damage: 40, range: 1, type: 'ph' }, valuable: { value: 1 } },
+	greatSword: { attackable: { damage: 48, range: 1, type: 'ph' }, valuable: { value: 1 } },
+	bow: { attackable: { damage: 56, range: 1, type: 'ph' }, valuable: { value: 1 } },
+	amulet: { buff: { spellDamageBonus: 0.5 }, valuable: { value: 1 } },
+	wand: { buff: { spellDamageBonus: 1 }, valuable: { value: 1 } },
+	staff: { buff: { spellDamageBonus: 2 }, valuable: { value: 1 } },
+	triangle: { buff: { spellDamageBonus: 2 }, attackable: { damage: 88, range: 1, type: 'ph' }, valuable: { value: 1 } },
+	pistol: { attackable: { damage: 96, range: 1, type: 'ph' }, valuable: { value: 1 } },
+	lightSword: { attackable: { damage: 104, range: 1, type: 'ph' }, valuable: { value: 1 } },
+	phazor: { attackable: { damage: 112, range: 1, type: 'ph' }, valuable: { value: 1 } },
+	blaster: { attackable: { damage: 120, range: 1, type: 'ph' }, valuable: { value: 1 } },
 	armor: {
 		type: 'item',
 		isArmor: true,
 		// TODO: Where can it be worn
 	},
+
 };

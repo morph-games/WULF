@@ -16,6 +16,7 @@ export default class World {
 		this.maps = WorldMap.makeMaps(
 			worldOptions?.maps || {},
 			worldOptions?.globalLegend,
+			worldOptions?.mapTypes,
 			this.entityTypes,
 		);
 		// const overworldMapId = this.maps.findIndex((map) => map.mapKey === 'overworld');
@@ -191,12 +192,21 @@ export default class World {
 				.filter((ent) => ent.isItem)
 				.map((ent) => this.makeVisibleThing(ent, worldLeftX, worldTopY)),
 			actors: allVisibleEnts
-				.filter((ent) => ent.isActor)
+				.filter((ent) => ent.isActor && ent.whoId !== whoId)
 				.map((ent) => {
 					const visibleActor = this.makeVisibleThing(ent, worldLeftX, worldTopY);
 					return isAlive(ent) ? visibleActor
 						: [ent.deadSprite, visibleActor[1], visibleActor[2]];
 				}),
+			/*
+			self: allVisibleEnts
+				.filter((ent) => ent.whoId === whoId)
+				.map((ent) => {
+					const visibleActor = this.makeVisibleThing(ent, worldLeftX, worldTopY);
+					return isAlive(ent) ? visibleActor
+						: [ent.deadSprite, visibleActor[1], visibleActor[2]];
+				}),
+			*/
 		};
 		return visibleWorld;
 	}

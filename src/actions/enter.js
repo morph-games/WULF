@@ -1,7 +1,7 @@
 import { getTopEntityComponent, getMapEntitiesAtActor, parseActionResult } from '../actionUtilities.js';
 
 function enter(actor, map, mapEnts) {
-	if (!actor.canEnter) return [false, 'You cannot enter.'];
+	if (!actor.enterer) return [false, 'You cannot enter.'];
 	const enterComp = getTopEntityComponent(getMapEntitiesAtActor(mapEnts, actor), 'enter');
 	if (!enterComp) {
 		const klimbResult = this.klimb(actor, map, mapEnts);
@@ -13,6 +13,7 @@ function enter(actor, map, mapEnts) {
 		return [false, 'Error entering!'];
 	}
 	const enterArray = [enterComp.mapKey];
+	// TODO: use enterer.speed
 	return {
 		success: true,
 		message: 'You enter a new location.',

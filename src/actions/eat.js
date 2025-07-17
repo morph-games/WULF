@@ -6,12 +6,11 @@ function isHungry(actor) {
 	return (actor?.eater && !hasFood(actor));
 }
 
-function eatMoveMeal(actor) {
+function eatMoveMeal(actor, map) {
 	if (!actor?.currencies?.food || !actor?.eater?.moveMeal) return false;
-	actor.currencies.food = Math.max(
-		0,
-		actor.currencies.food - (actor?.eater?.moveMeal || 0),
-	);
+	const { moveMealMultiplier = 1 } = map.base;
+	const eatAmount = (actor?.eater?.moveMeal || 0) * moveMealMultiplier;
+	actor.currencies.food = Math.max(0, actor.currencies.food - eatAmount);
 	return true;
 }
 
