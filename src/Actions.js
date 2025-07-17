@@ -18,6 +18,9 @@ import {
 import { attack, getMeleeAttackRange } from './actions/attack.js';
 import { enter } from './actions/enter.js';
 import { move } from './actions/move.js';
+import { pass } from './actions/pass.js';
+import { talk } from './actions/talk.js';
+import { transact } from './actions/transact.js';
 
 const DEATH_COOLDOWN = 100;
 // Actions are essentially ECS Systems
@@ -154,10 +157,6 @@ function offer(actor, map, mapEnts) {
 	return [false, 'Not yet implemented.'];
 }
 
-function pass() { // pass time -- eat?
-	return [true, 'You wait a moment.'];
-}
-
 function pickpocket(actor, map, mapEnts, direction) {
 	return [false, 'Not yet implemented.'];
 }
@@ -221,14 +220,6 @@ function ready(actor, map, mapEnts, item) {
 }
 
 function summon(actor, map, mapEnts) {
-	return [false, 'Not yet implemented.'];
-}
-
-function talk(actor, map, mapEnts, direction) {
-	return [false, 'Not yet implemented.'];
-}
-
-function transact(actor, map, mapEnts, direction) {
 	return [false, 'Not yet implemented.'];
 }
 
