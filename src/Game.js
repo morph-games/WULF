@@ -3,7 +3,14 @@ import GameStorage from './GameStorage.js';
 import InputController from './InputController.js';
 import WorldCommunicator from './WorldCommunicator.js';
 import { wait, capitalizeFirst } from './utilities.js';
-import { VOLUME_MIN, VOLUME_MAX } from './constants.js';
+import { VOLUME_MIN, VOLUME_MAX, COORDINATE_MAP } from './constants.js';
+
+function findDirectionKey(x = 0, y = 0) {
+	if (x !== 0 && y !== 0) return null; // Need at least one zero
+	return Object.keys(COORDINATE_MAP).find(
+		(key) => (COORDINATE_MAP[key][0] === Math.sign(x) && COORDINATE_MAP[key][1] === Math.sign(y)),
+	);
+}
 
 export default class Game {
 	constructor(options = {}) {
@@ -145,6 +152,21 @@ export default class Game {
 			return;
 		}
 		// Check if the command needs a direction
+		if (commandWords.includes('nearby')) {
+			const i = commandWords.findIndex((w) => w === 'nearby');
+			const { visibleWorldX, visibleWorldY } = this.party.avatar;
+			const ents = this.findVisibleEntitiesNearby(visibleWorldX, visibleWorldY);
+			// If there is only one thing nearby, then do the action in that direction
+			if (ents.length === 1) {
+				const [, visX, visY] = ents[0];
+				const direction = findDirectionKey(visX - visibleWorldX, visY - visibleWorldY);
+				if (direction) commandWords[i] = direction;
+				// else if (ents.length > 1)
+				// TODO: if multiple items, let user select?
+			} else {
+				commandWords[i] = 'direction';
+			}
+		}
 		if (commandWords.includes('direction')) {
 			this.switchToAskDirection(commandWords);
 			return;
@@ -160,6 +182,27 @@ export default class Game {
 			centerX - Math.floor(this.mapDisplaySizeX / 2),
 			centerY - Math.floor(this.mapDisplaySizeY / 2),
 		];
+	}
+
+	findVisibleEntitiesAt(x, y, types = ['actors', 'items', 'props']) {
+		const found = [];
+		types.forEach((type) => {
+			this.visibleWorld[type].forEach((visibleEntity) => {
+				const [, visX, visY] = visibleEntity;
+				if (visX === x && visY === y) found.push(visibleEntity);
+			});
+		});
+		return found;
+	}
+
+	findVisibleEntitiesNearby(x, y, types) {
+		let near = [];
+		Object.values(COORDINATE_MAP).forEach(([dirX, dirY]) => {
+			// if (dirX === 0)
+			const ents = this.findVisibleEntitiesAt(x + dirX, y + dirY, types);
+			near = [...near, ...ents];
+		});
+		return near;
 	}
 
 	drawMap() {
