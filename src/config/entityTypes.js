@@ -228,16 +228,18 @@ export default {
 	dwarf: {
 		type: 'wanderer',
 		sprite: 'dwarf-0',
-		buyer: {
-			any: ['item'],
-		},
-		seller: {
-			types: [
-				'dagger', 'mace', 'axe', 'ropeAndSpikes',
-				'sword', 'greatSword',
-				'bow', 'amulet', 'wand', 'staff',
-			],
-			movesCountGate: [0, 0, 0, 0, 1500, 1500, 3000, 3000, 3000, 3000],
+		shop: {
+			buy: {
+				any: ['item'],
+			},
+			sell: {
+				types: [
+					'dagger', 'mace', 'axe', 'ropeAndSpikes',
+					'sword', 'greatSword',
+					'bow', 'amulet', 'wand', 'staff',
+				],
+				gateByMovesCount: [0, 0, 0, 0, 1500, 1500, 3000, 3000, 3000, 3000],
+			},
 		},
 	},
 	monster: {
@@ -299,9 +301,10 @@ export default {
 	item: {
 		type: 'entity',
 		isItem: true,
-		value: {
-			valueMultiplier: 0, // 1 for normal items, <1 for junk, >1 for treasures
+		valuable: {
+			valueMultiplier: 1, // 1 for normal items, <1 for junk, >1 for treasures
 		},
+		sprite: 'torch-0',
 		// LATER: weight
 		// TODO
 	},
@@ -337,25 +340,29 @@ export default {
 			type: 'ph',
 		},
 	},
-	dagger: { attackable: { damage: 8, range: 1, type: 'ph' }, valuable: { value: 1 } },
-	mace: { attackable: { damage: 16, range: 1, type: 'ph' }, valuable: { value: 1 } },
-	axe: { attackable: { damage: 24, range: 1, type: 'ph' }, valuable: { value: 1 } },
-	ropeAndSpikes: { attackable: { damage: 1, range: 1, type: 'ph' }, valuable: { value: 1 } },
-	sword: { attackable: { damage: 40, range: 1, type: 'ph' }, valuable: { value: 1 } },
-	greatSword: { attackable: { damage: 48, range: 1, type: 'ph' }, valuable: { value: 1 } },
-	bow: { attackable: { damage: 56, range: 1, type: 'ph' }, valuable: { value: 1 } },
-	amulet: { buff: { spellDamageBonus: 0.5 }, valuable: { value: 1 } },
-	wand: { buff: { spellDamageBonus: 1 }, valuable: { value: 1 } },
-	staff: { buff: { spellDamageBonus: 2 }, valuable: { value: 1 } },
-	triangle: { buff: { spellDamageBonus: 2 }, attackable: { damage: 88, range: 1, type: 'ph' }, valuable: { value: 1 } },
-	pistol: { attackable: { damage: 96, range: 1, type: 'ph' }, valuable: { value: 1 } },
-	lightSword: { attackable: { damage: 104, range: 1, type: 'ph' }, valuable: { value: 1 } },
-	phazor: { attackable: { damage: 112, range: 1, type: 'ph' }, valuable: { value: 1 } },
-	blaster: { attackable: { damage: 120, range: 1, type: 'ph' }, valuable: { value: 1 } },
+	dagger: { attackable: { damage: 8, range: 1, type: 'ph' }, type: 'weapon' },
+	mace: { attackable: { damage: 16, range: 1, type: 'ph' }, type: 'weapon' },
+	axe: { attackable: { damage: 24, range: 1, type: 'ph' }, type: 'weapon' },
+	ropeAndSpikes: { attackable: { damage: 1, range: 1, type: 'ph' }, type: 'weapon' },
+	sword: { attackable: { damage: 40, range: 1, type: 'ph' }, type: 'weapon' },
+	greatSword: { attackable: { damage: 48, range: 1, type: 'ph' }, type: 'weapon' },
+	bow: { attackable: { damage: 56, range: 1, type: 'ph' }, type: 'weapon' },
+	amulet: { buff: { spellDamageBonus: 0.5 }, type: 'weapon' },
+	wand: { buff: { spellDamageBonus: 1 }, type: 'weapon' },
+	staff: { buff: { spellDamageBonus: 2 }, type: 'weapon' },
+	triangle: { buff: { spellDamageBonus: 2 }, attackable: { damage: 88, range: 1, type: 'ph' }, type: 'weapon' },
+	pistol: { attackable: { damage: 96, range: 1, type: 'ph' }, type: 'weapon' },
+	lightSword: { attackable: { damage: 104, range: 1, type: 'ph' }, type: 'weapon' },
+	phazor: { attackable: { damage: 112, range: 1, type: 'ph' }, type: 'weapon' },
+	blaster: { attackable: { damage: 120, range: 1, type: 'ph' }, type: 'weapon' },
 	armor: {
 		type: 'item',
 		isArmor: true,
 		// TODO: Where can it be worn
 	},
-
+	leatherArmor: { type: 'armor', buff: { defense: 2 }, valuable: 10 },
+	chainArmor: { type: 'armor', buff: { defense: 4 }, valuable: 25 },
+	plateArmor: { type: 'armor', buff: { defense: 6 }, valuable: 60 },
+	vacuumArmor: { type: 'armor', buff: { defense: 9 }, valuable: 120 },
+	reflectArmor: { type: 'armor', buff: { defense: 14 }, valuable: 280 },
 };

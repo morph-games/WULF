@@ -9,7 +9,7 @@ export default {
 		'~~~~..ff.....g~..f..~~~~~',
 		'~~~...^f.....sfffff.~~~~~',
 		'~~~..^^^.......fffff.~~~~',
-		'~~~..^^^........3fff...',
+		'~~~..^^^....d...3fff...',
 		'~~~..^D........fffff..',
 		'~~~.^^^^....h....ff..',
 		'~~~..^^^b.c.....O..ff..',
@@ -77,6 +77,7 @@ export default {
 		's': ['water', 'sailboat'],
 		'g': ['water', 'galleon'],
 		'b': ['grass', 'broom'],
+		'd': ['grass', 'dwarf'],
 	},
 	spawn: { // WIP
 		types: ['beastman'],

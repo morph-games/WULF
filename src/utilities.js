@@ -1,8 +1,14 @@
 // Many functions taken from Little.js (MIT license) by Frank Force
 // https://github.com/KilledByAPixel/LittleJS/blob/main/src/engineUtilities.js
 
-/** Random global functions
- *  @namespace Random */
+/** Clamps the value between max and min
+ *  @param {Number} value
+ *  @param {Number} [min]
+ *  @param {Number} [max]
+ *  @return {Number}
+ *  @memberof Utilities */
+// eslint-disable-next-line
+function clamp(value, min = 0, max = 1) { return value < min ? min : value > max ? max : value; }
 
 /** Returns a random value between the two values passed in
  *  @param {Number} [valueA]
@@ -26,7 +32,7 @@ function randIntInclusive(valueA, valueB = 0) {
 }
 
 function distanceSquared(x1, y1, x2, y2) {
-	return (x1 - x2)**2 + (y1 - y2)**2;
+	return (x1 - x2) ** 2 + (y1 - y2) ** 2;
 }
 
 function distance(x1, y1, x2, y2) {
@@ -40,6 +46,7 @@ const wait = (t) => new Promise((resolve) => { setTimeout(resolve, t); });
 const capitalizeFirst = (string) => string.charAt(0).toUpperCase() + string.slice(1);
 
 export {
+	clamp,
 	// Randomness
 	rand,
 	randInt,

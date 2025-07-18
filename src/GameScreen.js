@@ -56,6 +56,7 @@ export default class GameScreen {
 		this.commandConsoles = config.commandConsoles.map((commandConsoleOptions) => {
 			return new GameConsole(commandConsoleOptions, this.fontsSpritesheet);
 		});
+		this.centralConsole = new GameConsole(config?.centralConsole, this.fontsSpritesheet);
 	}
 
 	static getPrintableNumber(n, maxSize = 4) {
@@ -117,12 +118,13 @@ export default class GameScreen {
 		this.drawSprite(sprite, visibleWorldX, visibleWorldY);
 	}
 
-	drawMap(visibleWorld, party) {
+	drawMap(visibleWorld, party, hideLines) {
 		this.drawTerrain(visibleWorld);
 		this.drawVisibleThings(visibleWorld.items);
 		this.drawVisibleThings(visibleWorld.props);
 		this.drawVisibleThings(visibleWorld.actors);
 		this.drawParty(party);
+		if (hideLines) return;
 		// ^ Currently is redundant, but ensures that character is draw on top
 		// this.gameCanvas.removePixelTransparency();
 		this.borderLines.forEach((line) => {
@@ -150,6 +152,13 @@ export default class GameScreen {
 		this.commandConsoles[1].printLines(col2);
 	}
 
+	drawCentralText(lines = []) {
+		this.quickStatConsole.clear();
+		this.mainConsole.clear();
+		this.centralConsole.clear();
+		this.centralConsole.printLines(lines);
+	}
+
 	async setup() {
 		// await this.ss.load();
 		// await this.fontsSpritesheet.load();
@@ -162,6 +171,7 @@ export default class GameScreen {
 		const setupPromises = this.commandConsoles.map((console) => {
 			return console.setup(this.gameCanvas);
 		});
+		await this.centralConsole.setup(this.gameCanvas);
 		await Promise.allSettled(setupPromises);
 
 		// testFontDraw(this.gameCanvas);

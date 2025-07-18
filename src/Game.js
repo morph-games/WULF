@@ -2,7 +2,8 @@ import GameScreen from './GameScreen.js';
 import GameStorage from './GameStorage.js';
 import InputController from './InputController.js';
 import WorldCommunicator from './WorldCommunicator.js';
-import { wait, capitalizeFirst } from './utilities.js';
+import GameShop from './GameShop.js';
+import { clamp, wait, capitalizeFirst } from './utilities.js';
 import { VOLUME_MIN, VOLUME_MAX, COORDINATE_MAP } from './constants.js';
 
 function findDirectionKey(x = 0, y = 0) {
@@ -29,6 +30,9 @@ export default class Game {
 		this.renderWorldTime = 0; // the world time that we are rendered up to
 		this.volume = 5;
 		this.settings = structuredClone(options.settings);
+		this.shopTab = 0;
+		this.shopIndex = 0;
+		this.gameShop = {};
 	}
 
 	static waitForDom() {
@@ -82,7 +86,7 @@ export default class Game {
 		this.inputCtrl.setState('travel', (command) => this.executeCommand(command));
 	}
 
-	switchTo(stateName) {
+	switchTo(stateName, data) {
 		if (stateName === 'travel') {
 			this.switchToTravel();
 			return;
@@ -113,6 +117,33 @@ export default class Game {
 				this.drawKeyCommandsScreen('travel');
 			});
 			this.drawKeyCommandsScreen('travel');
+			return;
+		}
+		if (stateName === 'shop') {
+			this.gameShop = new GameShop(data.shop);
+			this.inputCtrl.setState('shop', (command) => {
+				if (command === 'abort') {
+					this.switchTo('travel');
+					return;
+				}
+				if (command === 'add') {
+					this.gameShop.add(1);
+				} else if (command === 'subtract') {
+					this.gameShop.subtract(1);
+				}
+				if (command === 'nextTab') {
+					this.gameShop.tab(1);
+				} else if (command === 'previousTab') {
+					this.gameShop.tab(-1);
+				}
+				if (command === 'next') {
+					this.gameShop.next(1);
+				} else if (command === 'previous') {
+					this.gameShop.next(-1);
+				}
+				this.drawShop();
+			});
+			this.drawShop();
 			return;
 		}
 		console.warn('Unknown state', stateName);
@@ -205,8 +236,8 @@ export default class Game {
 		return near;
 	}
 
-	drawMap() {
-		this.screen.drawMap(this.visibleWorld, this.party);
+	drawMap(hideLines) {
+		this.screen.drawMap(this.visibleWorld, this.party, hideLines);
 	}
 
 	getStateKeyCommands(stateName) {
@@ -234,6 +265,11 @@ export default class Game {
 		this.screen.drawCommandColumns(commandLines);
 	}
 
+	drawShop() {
+		this.drawMap(true);
+		this.screen.drawCentralText(this.gameShop.getTextLines());
+	}
+
 	drawAll() {
 		this.screen.drawAll(this.visibleWorld, this.party);
 	}
@@ -254,9 +290,10 @@ export default class Game {
 	drawDeltas(deltas = [], fromWorldTime = 0, toWorldTime = 0) {
 		const messagesBackwards = [];
 		Game.loopDeltas(deltas, fromWorldTime, toWorldTime, (delta) => {
-			if (this.renderWorldTime < delta.worldTime) {
-				if (delta.whoId === this.avatarWhoId && !delta.quiet) {
-					messagesBackwards.push(delta.message);
+			const { whoId, message, quiet, worldTime } = delta;
+			if (this.renderWorldTime < worldTime) {
+				if (whoId === this.avatarWhoId && !quiet) {
+					messagesBackwards.push(message);
 				}
 			}
 		});
@@ -266,22 +303,36 @@ export default class Game {
 		}
 	}
 
+	handleDeltas(deltas = []) {
+		if (!deltas) return null;
+		const startWorldTime = this.renderWorldTime;
+		const endWorldTime = deltas[deltas.length - 1]?.worldTime || 0;
+		// Handle the outcome
+		this.drawDeltas(deltas, startWorldTime, endWorldTime);
+		this.renderWorldTime = endWorldTime;
+		// Look for the need to switch
+		const deltasWithData = deltas.filter((delta) => delta.data);
+		if (!deltasWithData.length) return null;
+		// Just look at the most recent data
+		// TODO: Make this more robust, looking at all data returned
+		const lastData = deltasWithData[deltasWithData.length - 1].data;
+		if (lastData.shop) return { ...lastData, stateName: 'shop' };
+		return { ...lastData };
+	}
+
 	handleIncomingData(data) {
 		const { visibleWorld, party, deltas } = data;
 		this.visibleWorld = Object.freeze(structuredClone(visibleWorld));
 		this.party = Object.freeze(structuredClone(party));
 		// console.log(data);
-		if (deltas) {
-			const startWorldTime = this.renderWorldTime;
-			const endWorldTime = deltas[deltas.length - 1]?.worldTime || 0;
-			// Handle the outcome
-			this.drawDeltas(deltas, startWorldTime, endWorldTime);
-			this.renderWorldTime = endWorldTime;
-		}
+		const switchToData = this.handleDeltas(deltas);
 		// if (outcome.message) print(outcome.message);
 		// Refocus the map on the avatar, and re-draw
 		this.refocus();
 		this.drawAll();
+		if (switchToData && switchToData.stateName) {
+			this.switchTo(switchToData.stateName, switchToData);
+		}
 	}
 
 	async setup() {

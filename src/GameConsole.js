@@ -98,4 +98,9 @@ export default class GameConsole {
 		this.printLines();
 		this.printCursor();
 	}
+
+	clear() {
+		const fillerRows = (' ').repeat(this.rows).split('').map(() => (' ').repeat(this.columns));
+		this.printLines(fillerRows);
+	}
 }

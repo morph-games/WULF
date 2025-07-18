@@ -6,11 +6,12 @@ import { distance, randIntInclusive } from './utilities.js';
 /** result param can be array or object */
 function parseActionResult(result = {}) {
 	let { success = null, message = '' } = result;
+	const { deltaData = null } = result;
 	const { followUp = null, cooldownMultiplier = 1, quiet = false } = result;
 	if (result instanceof Array) {
 		[success, message] = result;
 	}
-	return { success, message, followUp, cooldownMultiplier, quiet };
+	return { success, message, followUp, cooldownMultiplier, quiet, deltaData };
 }
 
 function getMapEntitiesAt(mapEnts, x, y) {

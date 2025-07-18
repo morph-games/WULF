@@ -75,6 +75,15 @@ export default {
 			fontSize: FONT_SIZE,
 		},
 	],
+	centralConsole: {
+		horizontal: 'left',
+		vertical: 'top',
+		rows: 21,
+		columns: 36,
+		fontSize: FONT_SIZE,
+		offsetX: FONT_SIZE * 2,
+		offsetY: FONT_SIZE * 2,
+	},
 	world: {
 		obstacleTypes: [
 			'none', 		// 0
@@ -214,6 +223,28 @@ export default {
 				Escape: 'abort',
 				Enter: 'abort',
 				' ': 'abort',
+			},
+		},
+		shop: {
+			kb: {
+				Tab: 'nextTab',
+				ArrowRight: 'add',
+				ArrowLeft: 'subtract',
+				ArrowDown: 'next',
+				ArrowUp: 'previous',
+				a: 'subtract',
+				d: 'add',
+				s: 'next',
+				w: 'previous',
+				Escape: 'abort',
+				'-': 'subtract',
+				'=': 'add',
+				'+': 'add',
+				'[': 'previousTab',
+				']': 'nextTab',
+				' ': 'add',
+				t: 'talk',
+				Enter: 'complete',
 			},
 		},
 		commands: {

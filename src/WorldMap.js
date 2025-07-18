@@ -168,7 +168,7 @@ export default class WorldMap {
 	getTerrainEntity(x, y) {
 		// TODO: calculate this once and save it on this object
 		const type = this.getTerrainTypeKey(x, y);
-		const terrainEnt = this.entityTypes.getExtendedType({ type });
+		const terrainEnt = this.entityTypes.createEntityByType(type);
 		// console.log(terrainEnt);
 		return terrainEnt;
 	}

@@ -239,7 +239,8 @@ export default class World {
 		}
 		const map = this.getMap(mapId);
 		const mapEnts = this.ents.getEntitiesOnMap(mapId);
-		const { success, message, followUp, quiet } = this.actions.perform(who, map, mapEnts, mapTime);
+		const actionResult = this.actions.perform(who, map, mapEnts, mapTime);
+		const { success, message, followUp, quiet, deltaData } = actionResult;
 		// console.log('Performed action', who.whoId, success, message);
 		if (followUp) { // World methods that need to be called afterwards
 			this[followUp[0]](...followUp.slice(1));
@@ -247,7 +248,16 @@ export default class World {
 		if (this.connections[whoId]) await this.updateClient(whoId);
 		// console.log(success, message);
 		// Return a "delta" (WIP)
-		return { mapId, mapTime, success, message, quiet, whoId, worldTime: this.time };
+		return {
+			mapId,
+			mapTime,
+			success,
+			message,
+			quiet,
+			whoId,
+			worldTime: this.time,
+			data: deltaData,
+		};
 	}
 
 	getSimMapIds() {

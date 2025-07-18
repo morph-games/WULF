@@ -7,22 +7,32 @@ export default class EntityTypes {
 	}
 
 	static getExtendedType(obj = {}, allTypes = {}) {
-		let extendedObj = obj;
-		if (obj.type) {
-			if (allTypes[obj.type]) {
-				extendedObj = {
-					...EntityTypes.getExtendedType(allTypes[obj.type], allTypes),
-					...extendedObj,
-				};
+		let newObj = structuredClone(obj);
+		const { type, typeKey } = newObj;
+		if (!newObj.types) newObj.types = [];
+		if (typeKey) newObj.types.push(typeKey);
+		if (type) {
+			if (allTypes[type]) {
+				const parent = EntityTypes.getExtendedType(allTypes[type], allTypes);
+				newObj.types = [
+					...parent.types,
+					type,
+				];
+				newObj = { ...parent, ...newObj };
 			} else {
 				console.error('Could not find type', obj.type);
 			}
 		}
-		return structuredClone(extendedObj);
+		newObj.types = Array.from(new Set(newObj.types)); // Remove duplicates
+		return structuredClone(newObj);
 	}
 
 	getExtendedType(obj = {}) {
 		return EntityTypes.getExtendedType(obj, this.allTypes);
+	}
+
+	createEntityByType(type) {
+		return this.getExtendedType({ type });
 	}
 
 	buildAllTypes(entityTypesConfig) {
@@ -43,6 +53,7 @@ export default class EntityTypes {
 			typeObj.entTypeId = this.allTypesArray.length - 1;
 			typeObj.typeKey = typeKey;
 		});
+		console.log('All types:', this.allTypes);
 		this.allTypesArray.forEach((typeObj) => {
 			const extendedTypeObj = EntityTypes.getExtendedType(typeObj, this.allTypes);
 			this.allTypes[extendedTypeObj.typeKey] = extendedTypeObj;
