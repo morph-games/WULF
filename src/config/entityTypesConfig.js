@@ -154,7 +154,18 @@ export default {
 			max: 255,
 		},
 		equipment: {
-			// ?
+			head: null,
+			neck: null,
+			torso: null,
+			waist: null,
+			legs: null,
+			leftHand: null,
+			rightHand: null,
+			back: null,
+			leftFinger: null,
+			rightFinger: null,
+			mainHandHeld: null,
+			offHandHeld: null,
 		},
 		obstacleId: 13,
 	},
@@ -185,7 +196,7 @@ export default {
 			},
 		},
 		inventory: {
-			contents: [],
+			contents: ['dagger', 'sword', 'leatherArmor', 'chainArmor'],
 			max: 255,
 		},
 		experience: {
@@ -332,7 +343,7 @@ export default {
 		type: 'item',
 		isWeapon: true,
 		equippable: {
-			slots: ['anyHand'],
+			slots: ['mainHandHeld'],
 		},
 		attackable: {
 			range: 1,
@@ -358,7 +369,9 @@ export default {
 	armor: {
 		type: 'item',
 		isArmor: true,
-		// TODO: Where can it be worn
+		equippable: {
+			slots: ['torso'],
+		},
 	},
 	leatherArmor: { type: 'armor', buff: { defense: 2 }, valuable: 10 },
 	chainArmor: { type: 'armor', buff: { defense: 4 }, valuable: 25 },
