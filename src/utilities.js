@@ -45,6 +45,21 @@ const wait = (t) => new Promise((resolve) => { setTimeout(resolve, t); });
 
 const capitalizeFirst = (string) => string.charAt(0).toUpperCase() + string.slice(1);
 
+// Entities
+
+function areEntitiesTheSame(ent1, ent2) {
+	if (ent1 === ent2) return true;
+	return (typeof ent1.entId === 'number' && ent1.entId === ent2.entId);
+}
+
+function isEntityShaped(thing) {
+	return (
+		typeof thing === 'object'
+		&& (typeof thing.entTypeId === 'number'
+		|| typeof thing.entId === 'number')
+	);
+}
+
 export {
 	clamp,
 	// Randomness
@@ -58,4 +73,7 @@ export {
 	// Vector math
 	distanceSquared,
 	distance,
+	// Entities
+	areEntitiesTheSame,
+	isEntityShaped,
 };

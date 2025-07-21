@@ -3,7 +3,8 @@ import GameStorage from './GameStorage.js';
 import InputController from './InputController.js';
 import WorldCommunicator from './WorldCommunicator.js';
 import GameShop from './GameShop.js';
-import { clamp, wait, capitalizeFirst } from './utilities.js';
+import InventoryInterface from './InventoryInterface.js';
+import { wait, capitalizeFirst } from './utilities.js';
 import { VOLUME_MIN, VOLUME_MAX, COORDINATE_MAP } from './constants.js';
 
 function findDirectionKey(x = 0, y = 0) {
@@ -49,12 +50,14 @@ export default class Game {
 	}
 
 	async sendWorldCommand(worldCommand) {
+		if (!worldCommand) return;
 		const [
-			outcome, visibleWorld, party,
+			outcome,
+			// visibleWorld, party,
 		] = await this.worldComm.sendCommandToWorld(worldCommand, this.avatarWhoId);
 		// if (outcome.message) this.mainConsole.print(outcome.message);
 		// TODO: Maybe keep track of the message in a log?
-		this.handleIncomingData({ visibleWorld, party });
+		// this.handleIncomingData({ visibleWorld, party });
 		return outcome;
 	}
 
@@ -120,8 +123,8 @@ export default class Game {
 			return;
 		}
 		if (stateName === 'shop') {
-			this.gameShop = new GameShop(data.shop);
-			this.inputCtrl.setState('shop', (command) => {
+			this.gameShop = new GameShop(data.shop, this.party.avatar.inventory);
+			this.inputCtrl.setState('shop', async (command) => {
 				if (command === 'abort') {
 					this.switchTo('travel');
 					return;
@@ -141,9 +144,53 @@ export default class Game {
 				} else if (command === 'previous') {
 					this.gameShop.next(-1);
 				}
+				if (command === 'help') {
+					this.gameShop.toggleHelp();
+				}
+				if (command === 'complete') {
+					const [sellCommand, buyCommand] = this.gameShop.completeTransaction();
+					await this.sendWorldCommand(sellCommand);
+					await this.sendWorldCommand(buyCommand);
+					this.switchTo('travel');
+					return;
+				}
 				this.drawShop();
 			});
 			this.drawShop();
+			return;
+		}
+		if (stateName === 'equip') {
+			this.inventoryInterface = new InventoryInterface(this.party);
+			this.inputCtrl.setState('equip', async (command) => {
+				if (command === 'abort') {
+					this.switchTo('travel');
+					return;
+				}
+				if (command === 'equip close') {
+					this.inventoryInterface.equip();
+					// await this.sendWorldCommand('equip ???'); // FIXME
+					this.switchTo('travel');
+					return;
+				}
+				if (command === 'equip') {
+					this.inventoryInterface.equip();
+					// await this.sendWorldCommand('equip ???'); // FIXME
+				} else if (command === 'unequip') {
+					this.inventoryInterface.unequip();
+					// await this.sendWorldCommand('equip ???'); // FIXME
+				} else if (command === 'toggle') {
+					this.inventoryInterface.toggle();
+					// await this.sendWorldCommand('equip ???'); // FIXME
+				} else if (command === 'next') {
+					this.inventoryInterface.next(1);
+				} else if (command === 'previous') {
+					this.inventoryInterface.next(-1);
+				} else if (command === 'help') {
+					this.inventoryInterface.toggleHelp();
+				}
+				this.drawInventory();
+			});
+			this.drawInventory();
 			return;
 		}
 		console.warn('Unknown state', stateName);
@@ -169,6 +216,7 @@ export default class Game {
 			abort: () => {
 				this.switchToTravel();
 			},
+			ready: () => this.switchTo('equip'),
 			view: () => {},
 			chat: () => {},
 		};
@@ -270,6 +318,11 @@ export default class Game {
 		this.screen.drawCentralText(this.gameShop.getTextLines());
 	}
 
+	drawInventory() {
+		this.drawMap(true);
+		this.screen.drawCentralText(this.inventoryInterface.getTextLines());
+	}
+
 	drawAll() {
 		this.screen.drawAll(this.visibleWorld, this.party);
 	}
@@ -304,14 +357,20 @@ export default class Game {
 	}
 
 	handleDeltas(deltas = []) {
-		if (!deltas) return null;
+		if (!deltas || !deltas.length) return null;
 		const startWorldTime = this.renderWorldTime;
 		const endWorldTime = deltas[deltas.length - 1]?.worldTime || 0;
+		const deltasWithData = []; // deltas.filter((delta) => delta.data);
+		const deltasInRange = deltas.filter((delta) => {
+			const inRange = delta.worldTime >= startWorldTime;
+			if (inRange && delta.data) deltasWithData.push(delta);
+			return inRange;
+		});
+		console.log('\t\t\tDeltas handled:', deltas.length, 'in time range:', deltasInRange.length);
 		// Handle the outcome
 		this.drawDeltas(deltas, startWorldTime, endWorldTime);
 		this.renderWorldTime = endWorldTime;
 		// Look for the need to switch
-		const deltasWithData = deltas.filter((delta) => delta.data);
 		if (!deltasWithData.length) return null;
 		// Just look at the most recent data
 		// TODO: Make this more robust, looking at all data returned

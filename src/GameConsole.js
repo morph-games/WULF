@@ -73,7 +73,7 @@ export default class GameConsole {
 		];
 	}
 
-	printLine(text, index = 0) {
+	printLine(text = '', index = 0) {
 		const row = this.getRowBase() + index;
 		const { ctx } = this.gameCanvas;
 		const rightFillerCount = text.length < this.columns ? this.columns - text.length : 0;

@@ -1,4 +1,5 @@
 import { getMapEntitiesNextToActor, isAlive } from '../actionUtilities.js';
+import { randIntInclusive } from '../utilities.js';
 
 const DEFAULT_STOCK_QUANTITY = 10;
 
@@ -14,7 +15,7 @@ function getEntityValue(ent = {}) {
 
 /** Mutates a shop object to add sell stock */
 function addStockToShop(shopObj = {}, map = null, stepCount = 0) {
-	const { sell = {}, markUp = 2 } = shopObj;
+	const { sell = {} } = shopObj;
 	if (sell.stock) return shopObj;
 	const sellingTypes = sell.types.filter((type, i) => {
 		if (!sell.gateByMovesCount) return true;
@@ -22,9 +23,9 @@ function addStockToShop(shopObj = {}, map = null, stepCount = 0) {
 	});
 	sell.stock = sellingTypes.map((type, i) => {
 		const item = map.entityTypes.createEntityByType(type);
-		const price = Math.round(getEntityValue(item) / markUp);
+		const price = getEntityValue(item);
 		const quantity = (sell.quantity?.[i] === 0)
-			? 0 : sell.quantity?.[i] || DEFAULT_STOCK_QUANTITY;
+			? 0 : sell.quantity?.[i] || randIntInclusive(1, DEFAULT_STOCK_QUANTITY);
 		return [item.name, type, price, quantity];
 	});
 	return shopObj;
@@ -35,6 +36,12 @@ function restockShop(shopObj = {}, map = null, stepCount = 0) {
 	return addStockToShop(shopObj, map, stepCount);
 }
 
+function addBuyPricesToShop(shopObj = {}, map = null) {
+	// const { sell = {}, markUp = 2 } = shopObj;
+	// const buyPrice = Math.round(getEntityValue(item) / markUp);
+	// TODO
+}
+
 function transact(actor, map, mapEnts, direction) {
 	const targets = getMapEntitiesNextToActor(mapEnts, actor, direction)
 		.filter((ent) => isAlive(ent));
@@ -42,7 +49,9 @@ function transact(actor, map, mapEnts, direction) {
 	const shopActor = targets[0];
 	if (!shopActor.shop) return [true, `${shopActor.name} does not buy or sell.`];
 	const shop = structuredClone(shopActor.shop);
+	shop.entId = actor.entId;
 	addStockToShop(shop, map);
+	addBuyPricesToShop(shop, map);
 	return {
 		success: true,
 		message: `${shopActor.name} shows what they buy and sell...`,

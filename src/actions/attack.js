@@ -1,24 +1,33 @@
 import { damageEntities, getMapEntitiesNextToActor, isAlive } from '../actionUtilities.js';
 import { lootActor } from './loot.js';
 import { gainKillXp } from '../components/experience.js';
+import { getEquippedItems } from '../components/equipment.js';
 
 function getMeleeAttackDamage(actor) {
 	if (!actor.attacker) return [0, ''];
+	// Get natural attack and compare to item attack
 	const naturalDmg = actor.attacker?.natural.damage || 0;
 	const maxNaturalDmg = (typeof naturalDmg === 'number') ? naturalDmg : naturalDmg[1] || 0;
-	// TODO: Look at equipment
-	const equipmentDmg = 0;
-	const equipmentDmgType = '';
-	const maxEquipmentDmg = 0;
-
+	const equippedItems = getEquippedItems(actor);
+	const attackingItem = equippedItems.find((item) => item?.attackable?.damage);
+	// TODO: ^ Don't take first found. Look at all and take the best
+	const { damage = 0, type = '' } = attackingItem?.attackable || {};
+	const maxEquipmentDmg = (damage instanceof Array) ? damage[damage.length - 1] : damage;
+	console.log(attackingItem, 'vs', actor.attacker?.natural);
 	if (maxNaturalDmg > maxEquipmentDmg) {
-		return [naturalDmg, actor.attacker?.natural.damageType || ''];
+		return [naturalDmg, actor.attacker?.natural?.damageType || ''];
 	}
-	return [equipmentDmg, equipmentDmgType];
+	console.log('Using item for attack', attackingItem);
+	return [damage, type];
 }
 
 function getMeleeAttackRange(actor) {
-	return actor?.attacker?.range || 0; // TODO: Look at equipment and natural attack
+	const equippedItems = getEquippedItems(actor);
+	const maxRange = Math.max(
+		actor?.attacker?.range || 1, // Natural attack
+		...equippedItems.map((item) => item?.attackable?.range || 0),
+	);
+	return maxRange;
 }
 
 /** Melee Attack */

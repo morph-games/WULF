@@ -1,4 +1,5 @@
 import { generateCurrencies } from './components/currencies.js';
+import { createEntitiesInInventory } from './components/inventory.js';
 
 export default class EntityManager {
 	constructor(entityTypes) {
@@ -9,14 +10,14 @@ export default class EntityManager {
 
 	add(entObj = {}) {
 		const extendedEnt = this.entityTypes.getExtendedType(entObj);
-		const entData = structuredClone(extendedEnt);
+		const newEnt = structuredClone(extendedEnt);
 		// Any components that entail random generation will need to be added here
-		generateCurrencies(entData);
-		this.all.push({
-			...entData,
-			entId: this.nextEntId,
-		});
+		generateCurrencies(newEnt);
+		createEntitiesInInventory(newEnt, this.entityTypes);
+		newEnt.entId = this.nextEntId;
+		this.all.push(newEnt);
 		this.nextEntId += 1;
+		return newEnt;
 	}
 
 	addActor(obj) {
