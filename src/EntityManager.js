@@ -1,46 +1,44 @@
 import { generateCurrencies } from './components/currencies.js';
-import { createEntitiesInInventory } from './components/inventory.js';
+import { generateEntitiesInInventory } from './components/inventory.js';
 
 export default class EntityManager {
 	constructor(entityTypes) {
 		this.entityTypes = entityTypes;
 		this.all = []; // maps.reduce((arr, map) => ([...arr, ...map.getEntities()]), []);
-		this.nextEntId = this.all.length;
+		// Start Ids at one to avoid any falsey issues
+		this.nextEntId = 1; // this.all.length;
 	}
 
 	add(entObj = {}) {
+		console.log('Add', entObj);
 		const extendedEnt = this.entityTypes.getExtendedType(entObj);
 		const newEnt = structuredClone(extendedEnt);
+		// We want to use "add" rather than createUntrackedEntityByType so items get an entId
+		const createTrackedEntityByType = (type) => this.add({ type });
 		// Any components that entail random generation will need to be added here
 		generateCurrencies(newEnt);
-		createEntitiesInInventory(newEnt, this.entityTypes);
+		generateEntitiesInInventory(newEnt, createTrackedEntityByType);
 		newEnt.entId = this.nextEntId;
+		// Actors get a special whoId
+		if (newEnt.isActor) {
+			const { whoId = String(`actor-ent-${this.nextEntId}`) } = newEnt;
+			if (this.getActor(whoId)) throw new Error(`Already have an actor with whoId ${whoId}`);
+			newEnt.whoId = whoId;
+		}
+		// All done? Add it to the list and increment the id
 		this.all.push(newEnt);
 		this.nextEntId += 1;
 		return newEnt;
 	}
 
-	addActor(obj) {
-		const { whoId = String(`actor-ent-${this.nextEntId}`) } = obj;
-		if (this.getActor(whoId)) throw new Error(`Already have an actor with whoId ${whoId}`);
-		this.add({
-			...obj,
-			whoId,
-			isActor: true,
-		});
-	}
-
 	addAvatar(obj) {
-		this.addActor({ ...obj, type: 'avatar', isAvatar: true });
+		this.add({ ...obj, type: 'avatar', isAvatar: true });
 	}
 
-	allAllFromMaps(maps) {
+	addAllFromMaps(maps) {
+		console.log(this.entityTypes);
 		const allEntsFromMaps = maps.reduce((arr, map) => ([...arr, ...map.getEntities()]), []);
-		allEntsFromMaps.forEach((ent) => {
-			const extendedEnt = this.entityTypes.getExtendedType(ent);
-			if (extendedEnt.isActor) this.addActor(extendedEnt);
-			else this.add(extendedEnt);
-		});
+		allEntsFromMaps.forEach((ent) => this.add(ent));
 		console.log('All Entities', this.all);
 	}
 

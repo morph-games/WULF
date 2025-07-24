@@ -153,11 +153,17 @@ export default class GameShop {
 	completeTransaction() {
 		this.transaction.complete = true;
 		const { buy = [], sell = [] } = this.transaction;
+		if (!buy.length && !sell.length) return '';
 		const getIndexXQuantityCSV = (arr) => (
 			arr.map((n, i) => (n ? `${i}x${n}` : null)).filter((n) => n).join(',')
 		);
-		const sellCommand = (sell.length) ? `sell ${this.entId} ${getIndexXQuantityCSV(sell)}` : '';
-		const buyCommand = (buy.length) ? `buy ${this.entId} ${getIndexXQuantityCSV(buy)}` : '';
-		return [sellCommand, buyCommand];
+		// const sellCommand = (sell.length) ? `sell ${this.entId} ${getIndexXQuantityCSV(sell)}` : '';
+		// const buyCommand = (buy.length) ? `buy ${this.entId} ${getIndexXQuantityCSV(buy)}` : '';
+		const params = [];
+		// "+" Character buys, Shop sells
+		if (sell.length) params.push(`+${getIndexXQuantityCSV(sell)}`);
+		// "-" Character sells, Shop buys
+		if (buy.length) params.push(`-${getIndexXQuantityCSV(buy)}`);
+		return `transact ${this.entId} ${params.join(' ')}`;
 	}
 }

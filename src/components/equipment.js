@@ -1,5 +1,23 @@
 const FREE_SLOT = null;
 const HELD_SLOTS = ['mainHandHeld', 'offHandHeld'];
+const STANDARD_BODY_EQUIPMENT = { // Standard body
+	head: FREE_SLOT,
+	neck: FREE_SLOT,
+	torso: FREE_SLOT,
+	waist: FREE_SLOT,
+	legs: FREE_SLOT,
+	leftHand: FREE_SLOT,
+	rightHand: FREE_SLOT,
+	back: FREE_SLOT,
+	leftFinger: FREE_SLOT,
+	rightFinger: FREE_SLOT,
+	mainHandHeld: FREE_SLOT,
+	offHandHeld: FREE_SLOT,
+};
+// Note: These slot names need to be unique even when all lowercase.
+const LOWERCASE_SLOT_MAPPING = Object.keys(STANDARD_BODY_EQUIPMENT)
+	.map((key) => [key.toLowerCase(), key])
+	.reduce((obj, [lowKey, key]) => ({ ...obj, [lowKey]: key }), {});
 
 function areEntitiesTheSame(ent1, ent2) {
 	if (ent1 === ent2) return true;
@@ -7,20 +25,11 @@ function areEntitiesTheSame(ent1, ent2) {
 }
 
 function addEquipmentComponentToEntity(ent) {
-	ent.equipment = { // Standard body
-		head: FREE_SLOT,
-		neck: FREE_SLOT,
-		torso: FREE_SLOT,
-		waist: FREE_SLOT,
-		legs: FREE_SLOT,
-		leftHand: FREE_SLOT,
-		rightHand: FREE_SLOT,
-		back: FREE_SLOT,
-		leftFinger: FREE_SLOT,
-		rightFinger: FREE_SLOT,
-		mainHandHeld: FREE_SLOT,
-		offHandHeld: FREE_SLOT,
-	};
+	ent.equipment = structuredClone(STANDARD_BODY_EQUIPMENT);
+}
+
+function getCamelCaseSlotName(lowerSlotName) {
+	return LOWERCASE_SLOT_MAPPING[lowerSlotName.toLowerCase()];
 }
 
 function canEquip(ent, slotName) {
@@ -43,19 +52,20 @@ function isSlotFree(equipperEnt, slotName) {
 	return equipperEnt.equipment[slotName] === FREE_SLOT;
 }
 
-function findEquippedBy(itemEnt, equipperEnt) {
-	if (!equipperEnt.equipment) return null;
-	return Object.entries(equipperEnt.equipment).find(([, item]) => {
-		if (!item) return false;
-		return areEntitiesTheSame(item, itemEnt);
+function findEquippedBy(itemEntOrId, equipperEnt) {
+	if (!equipperEnt.equipment) return [];
+	const isEntId = typeof itemEntOrId === 'number';
+	const found = Object.entries(equipperEnt.equipment).find(([, item]) => {
+		if (!item || item === FREE_SLOT) return false;
+		if (isEntId) return item.entId === itemEntOrId;
+		return areEntitiesTheSame(item, itemEntOrId);
 	});
+	return found || [];
 }
 
-function findEquippedSlot(itemEnt, equipperEnt) {
+function findEquippedSlot(itemEntOrId, equipperEnt) {
 	if (!equipperEnt.equipment) return null;
-	const found = findEquippedBy(itemEnt, equipperEnt);
-	if (!found) return null;
-	const [slot] = found;
+	const [slot] = findEquippedBy(itemEntOrId, equipperEnt);
 	return slot;
 }
 
@@ -81,7 +91,7 @@ function equipItem(equipperEnt, itemEnt, slotName) {
 	if (!isEquippableBy(itemEnt, equipperEnt)) return false;
 	if (isItemEquippedBy(itemEnt, equipperEnt)) {
 		console.warn('Already equipped. Will not try to equip again. Unequip first.');
-		return false;
+		return true;
 	}
 	const equipInSlot = (slot) => {
 		const occupied = equipperEnt.equipment[slot];
@@ -104,14 +114,18 @@ function equipItem(equipperEnt, itemEnt, slotName) {
 	return equipInSlot(bestSlot);
 }
 
-function unequipItem(equipperEnt, itemEnt) {
-	const slot = findEquippedSlot(itemEnt, equipperEnt);
+function unequipItem(equipperEnt, itemEntOrId) {
+	const [slot, item] = findEquippedBy(itemEntOrId, equipperEnt);
 	if (!slot) return false;
 	equipperEnt.equipment[slot] = FREE_SLOT;
-	return itemEnt;
+	return item;
 }
 
-export { addEquipmentComponentToEntity, canEquip,
+export {
+	FREE_SLOT,
+	addEquipmentComponentToEntity,
+	getCamelCaseSlotName,
+	canEquip,
 	isEquippable,
 	isEquippableBy,
 	isSlotFree,

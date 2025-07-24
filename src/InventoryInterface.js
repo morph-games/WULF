@@ -1,10 +1,12 @@
 import { isItemEquippedBy, equipItem, unequipItem, getEquippedItems } from './components/equipment.js';
 import { giveToInventory, takeFromInventory } from './components/inventory.js';
+// TODO: Can't decide whether it is good or bad to be using component functions on the "front end"
 import { capitalizeFirst } from './utilities.js';
 
 export default class InventoryInterface {
-	constructor(party) {
-		this.party = party;
+	constructor(partyMembers) {
+		this.partyMembers = partyMembers || [];
+		this.originalEquipment = partyMembers.map((member) => structuredClone(member.equipment));
 		this.currentCharacter = null;
 		this.helpOn = false;
 		this.index = 0;
@@ -28,7 +30,7 @@ export default class InventoryInterface {
 
 	switchPartyMember(/* memberIndex */) {
 		// LATER: Make this work for multiple party members
-		this.currentCharacter = this.party.avatar;
+		this.currentCharacter = this.partyMembers[0]; // eslint-disable-line
 		this.buildList(this.currentCharacter);
 	}
 
@@ -76,30 +78,51 @@ export default class InventoryInterface {
 
 	getTextLines() {
 		const helpLines = (this.helpOn) ? [
-			' (Enter) Ready and close',
-			' (Esc) (r) Cancel',
 			' (Up/Down/W/S) Select item',
-			' (Left/Right/A/D) Equip/Unequip item',
-		] : [' (Arrows, Esc, Enter) (?) Help'];
+			' (Right/D) Equip item',
+			' (Left/A) Unequip item',
+			' (Space) Toggle',
+			' (Enter) (Esc) (r) Close',
+		] : [' (Arrows, r, Enter) (?) Help'];
+		// TODO: ^ Make this help text based on the config
 		const details = this.list.map((item, i) => {
 			const isEquipped = isItemEquippedBy(item, this.currentCharacter);
 			let cursor = (isEquipped) ? ' <' : ' >';
 			if (i !== this.index) cursor = '  ';
-			const padding = isEquipped ? '.' : ' ';
+			const name = capitalizeFirst(item.name || item.type);
 			return [
 				cursor,
 				' ',
-				capitalizeFirst(item.name || item.type).padEnd(20, padding),
-				isEquipped ? 'Equipped' : '',
+				isEquipped ? `${('.').repeat(17)}${name}` : name,
 			].join('');
 		});
 		details.length = 10;
 		return [
-			'--- Inventory ---',
+			'--- Inventory ---   --- Equipped ---',
 			'',
 			...details,
 			'',
 			...helpLines,
 		];
+	}
+
+	completeTransaction() {
+		let totalChanges = 0;
+		const partyChanges = [];
+		this.partyMembers.forEach((member, memberIndex) => {
+			const memberChanges = [];
+			Object.entries(member.equipment).forEach(([slot, item]) => {
+				if ((item || this.originalEquipment[slot])
+					&& item?.entId !== this.originalEquipment[slot]?.entId
+				) {
+					memberChanges.push(`${slot}:${item.entId}`);
+					totalChanges += 1;
+				}
+			});
+			partyChanges[memberIndex] = memberChanges.join(',');
+		});
+		if (!totalChanges) return '';
+		const partyChangesString = partyChanges.map((changesString, i) => `${i}=${changesString}`);
+		return `ready ${partyChangesString}`;
 	}
 }

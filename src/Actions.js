@@ -19,6 +19,7 @@ import { attack, getMeleeAttackRange } from './actions/attack.js';
 import { enter } from './actions/enter.js';
 import { move } from './actions/move.js';
 import { pass } from './actions/pass.js';
+import { ready } from './actions/ready.js';
 import { talk } from './actions/talk.js';
 import { transact } from './actions/transact.js';
 
@@ -215,10 +216,6 @@ function push(actor, map, mapEnts, direction) {
 	return [false, 'Not yet implemented.'];
 }
 
-function ready(actor, map, mapEnts, item) {
-	return [false, 'Not yet implemented.'];
-}
-
 function summon(actor, map, mapEnts) {
 	return [false, 'Not yet implemented.'];
 }
@@ -298,6 +295,7 @@ export default class Actions {
 		this.actionCooldownRandom = actionCooldownRandom;
 		this.actionWarmup = actionWarmup;
 		this.actionWarmupRandom = actionWarmupRandom;
+		this.lastKnownTimeNow = 0;
 	}
 
 	static has(actionName) {
@@ -340,6 +338,18 @@ export default class Actions {
 		actor.action.queue.push([actionName, actionParamsString]);
 	}
 
+	coolDownActor(actor, actionNameOrMultiplier, timeNow) {
+		const { action } = actor;
+		const isActionNameParam = typeof actionNameOrMultiplier === 'string';
+		const actionName = isActionNameParam ? actionNameOrMultiplier : 'pass';
+		const cooldownMultiplier = !isActionNameParam ? actionNameOrMultiplier : 1;
+		const cd = Math.max(
+			Math.round(this.getCooldownTime(actionName) * cooldownMultiplier),
+			1,
+		);
+		action.cooldown = Math.ceil((timeNow || this.lastKnownTimeNow) + cd);
+	}
+
 	enqueue(actor, actionName, actionParamsString) {
 		if (this.getWarmupTime(actionName)) {
 			actor.action.queue.push(['warmup', actionName]);
@@ -364,6 +374,7 @@ export default class Actions {
 	}
 
 	perform(actor, map, mapEnts, timeNow) {
+		if (typeof timeNow === 'number') this.lastKnownTimeNow = timeNow;
 		if (!Actions.hasReadyAction(actor, timeNow)) {
 			return parseActionResult([false, 'No ready actions.']);
 		}

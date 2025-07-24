@@ -40,12 +40,12 @@ function takeFromInventory(sourceEnt, thingTypeOrId, quantity = 1) {
 	return taken;
 }
 
-function createEntitiesInInventory(ent, entityTypes) {
+function generateEntitiesInInventory(ent, createEntityByType = () => null) {
 	if (!ent.inventory) return false;
 	if (!ent.inventory.contents) ent.inventory.contents = [];
 	ent.inventory.contents = ent.inventory.contents.map((thing) => {
 		if (typeof thing === 'string') {
-			return entityTypes.createEntityByType(thing);
+			return createEntityByType(thing);
 		}
 		if (isEntityShaped(thing)) {
 			// TODO: Do some check to make sure the item can fit in an inventory?
@@ -57,4 +57,4 @@ function createEntitiesInInventory(ent, entityTypes) {
 	return true;
 }
 
-export { createEntitiesInInventory, giveToInventory, takeFromInventory };
+export { generateEntitiesInInventory, giveToInventory, takeFromInventory };

@@ -1,3 +1,5 @@
+import { capitalizeFirst } from './utilities.js';
+
 export default class EntityTypes {
 	constructor(entityTypesConfig) {
 		// this.entityTypesConfig = entityTypesConfig || {};
@@ -6,20 +8,23 @@ export default class EntityTypes {
 		this.buildAllTypes(entityTypesConfig);
 	}
 
-	static getExtendedType(obj = {}, allTypes = {}) {
+	static getExtendedType(obj = {}, allTypes = {}, n = 0) {
 		let newObj = structuredClone(obj);
 		const { type, typeKey } = newObj;
+		// if (type) console.log(n, type);
 		if (!newObj.types) newObj.types = [];
 		if (typeKey) newObj.types.push(typeKey);
+
 		if (type) {
 			if (allTypes[type]) {
-				const parent = EntityTypes.getExtendedType(allTypes[type], allTypes);
+				const parent = EntityTypes.getExtendedType(allTypes[type], allTypes, n + 1);
 				newObj.types = [
 					...parent.types,
 					type,
 				];
 				newObj = { ...parent, ...newObj };
 			} else {
+				console.log(newObj);
 				console.error('Could not find type', obj.type);
 			}
 		}
@@ -31,7 +36,8 @@ export default class EntityTypes {
 		return EntityTypes.getExtendedType(obj, this.allTypes);
 	}
 
-	createEntityByType(type) {
+	/** Create an "untracked" entity, i.e. one without an `entId` */
+	createUntrackedEntityByType(type) {
 		return this.getExtendedType({ type });
 	}
 
@@ -53,15 +59,16 @@ export default class EntityTypes {
 			typeObj.entTypeId = this.allTypesArray.length - 1;
 			typeObj.typeKey = typeKey;
 		});
-		console.log('All types:', this.allTypes);
+		// console.log('All types:', this.allTypes);
 		this.allTypesArray.forEach((typeObj) => {
 			const extendedTypeObj = EntityTypes.getExtendedType(typeObj, this.allTypes);
 			this.allTypes[extendedTypeObj.typeKey] = extendedTypeObj;
 			this.allTypesArray[extendedTypeObj.entTypeId] = extendedTypeObj;
 		});
 		this.allTypesArray.forEach((typeObj) => {
-			if (!typeObj.name) typeObj.name = typeObj.typeKey; // eslint-disable-line no-param-reassign
+			if (!typeObj.name) typeObj.name = capitalizeFirst(typeObj.typeKey);
 		});
+		console.log('All types:', this.allTypes);
 	}
 
 	get(typeKey) {

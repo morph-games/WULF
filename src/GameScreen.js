@@ -114,8 +114,10 @@ export default class GameScreen {
 	}
 
 	drawParty(party) {
-		const { visibleWorldX, visibleWorldY, sprite } = party.avatar;
-		this.drawSprite(sprite, visibleWorldX, visibleWorldY);
+		for (let i = party.members.length - 1; i >= 0; i -= 1) {
+			const { visibleWorldX, visibleWorldY, sprite } = party.members[i];
+			this.drawSprite(sprite, visibleWorldX, visibleWorldY);
+		}
 	}
 
 	drawMap(visibleWorld, party, hideLines) {
@@ -135,11 +137,12 @@ export default class GameScreen {
 
 	drawAll(visibleWorld, party) {
 		this.drawMap(visibleWorld, party);
+		const leader = party.members[party.leaderIndex];
 		this.quickStatConsole.printLines([
-			`H.P.:${GameScreen.getPrintableNumber(party?.avatar?.health?.hp, 4)}`,
-			`Coin:${GameScreen.getPrintableNumber(party?.avatar?.currencies?.coins, 4)}`,
-			`Food:${GameScreen.getPrintableNumber(party?.avatar?.currencies?.food, 4)}`,
-			`X.P.:${GameScreen.getPrintableNumber(party?.avatar?.experience?.totalXp, 4)}`,
+			`H.P.:${GameScreen.getPrintableNumber(leader?.health?.hp, 4)}`,
+			`Coin:${GameScreen.getPrintableNumber(leader?.currencies?.coins, 4)}`,
+			`Food:${GameScreen.getPrintableNumber(leader?.currencies?.food, 4)}`,
+			`X.P.:${GameScreen.getPrintableNumber(leader?.experience?.totalXp, 4)}`,
 		]);
 	}
 

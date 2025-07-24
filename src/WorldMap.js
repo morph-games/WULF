@@ -12,6 +12,7 @@ export default class WorldMap {
 		this.width = this.base.map.reduce((max, row) => Math.max(max, row.length), 0);
 		this.maxX = this.width - 1;
 		this.maxY = this.height - 1;
+		this.terrainObstacleIds = { /* 'x-y': obstacleId, */ };
 	}
 
 	/** Make an array of world maps (alphabetized) */
@@ -165,12 +166,27 @@ export default class WorldMap {
 		return terrainTypeKey;
 	}
 
-	getTerrainEntity(x, y) {
-		// TODO: calculate this once and save it on this object
+	createUntrackedTerrainEntity(x, y) {
 		const type = this.getTerrainTypeKey(x, y);
-		const terrainEnt = this.entityTypes.createEntityByType(type);
-		// console.log(terrainEnt);
-		return terrainEnt;
+		return this.entityTypes.createUntrackedEntityByType(type);
+	}
+
+	getTerrainEntity(x, y) {
+		return this.createUntrackedTerrainEntity(x, y);
+		// const cellKey = `${x}-${y}`;
+		// if (!this.terrainEnts[cellKey]) {
+		// this.terrainEnts[cellKey] = this.createUntrackedTerrainEntity(x, y);
+		// }
+		// return this.terrainEnts[cellKey];
+	}
+
+	getTerrainObstacleId(x, y) {
+		const cellKey = `${x}-${y}`;
+		if (!this.terrainObstacleIds[cellKey]) {
+			const ent = this.createUntrackedTerrainEntity(x, y);
+			this.terrainObstacleIds[cellKey] = ent.obstacleId;
+		}
+		return this.terrainObstacleIds[cellKey];
 	}
 
 	getEntranceCoordinates() {

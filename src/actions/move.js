@@ -49,10 +49,10 @@ function move(actor, map, mapEnts, direction) {
 	const edge = map.getOffEdge(newX, newY);
 	if (edge) return moveOffEdge(actor, map, edge, newX, newY, direction); // Handle off the edge
 	// Not off the edge...
-	const terrainEnt = map.getTerrainEntity(newX, newY);
+	const terrainObstacleId = map.getTerrainObstacleId(newX, newY);
 	// Get obstacle Ids for everything on the cell we want to move to
 	const obstacleIds = [
-		terrainEnt.obstacleId,
+		terrainObstacleId,
 		...mapEnts
 			.filter((ent) => ent.x === newX && ent.y === newY)
 			.filter((ent) => !ent.isActor || isAlive(ent))

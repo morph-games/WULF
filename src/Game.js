@@ -34,6 +34,7 @@ export default class Game {
 		this.shopTab = 0;
 		this.shopIndex = 0;
 		this.gameShop = {};
+		this.interface = null;
 	}
 
 	static waitForDom() {
@@ -61,9 +62,14 @@ export default class Game {
 		return outcome;
 	}
 
+	getPartyLeader() {
+		return this?.party?.members[this.party.leaderIndex];
+	}
+
 	refocus() {
-		this.mapFocus[0] = this.party?.avatar.visibleWorldX || 0;
-		this.mapFocus[1] = this.party?.avatar.visibleWorldY || 0;
+		const leader = this.getPartyLeader();
+		this.mapFocus[0] = leader?.visibleWorldX || 0;
+		this.mapFocus[1] = leader?.visibleWorldY || 0;
 	}
 
 	switchToAskDirection(commandWords) {
@@ -92,13 +98,16 @@ export default class Game {
 	switchTo(stateName, data) {
 		if (stateName === 'travel') {
 			this.switchToTravel();
+			this.interface = null;
 			return;
 		}
 		if (stateName === 'direction') {
 			this.switchToAskDirection();
+			this.interface = null;
 			return;
 		}
 		if (stateName === 'commands') {
+			this.interface = null;
 			this.inputCtrl.setState('commands', (command) => {
 				if (command === 'abort') {
 					this.switchTo('travel');
@@ -123,7 +132,9 @@ export default class Game {
 			return;
 		}
 		if (stateName === 'shop') {
-			this.gameShop = new GameShop(data.shop, this.party.avatar.inventory);
+			this.gameShop = new GameShop(data.shop, this.getPartyLeader().inventory);
+			this.gameShop.draw = () => this.drawShop();
+			this.interface = this.gameShop;
 			this.inputCtrl.setState('shop', async (command) => {
 				if (command === 'abort') {
 					this.switchTo('travel');
@@ -148,39 +159,43 @@ export default class Game {
 					this.gameShop.toggleHelp();
 				}
 				if (command === 'complete') {
-					const [sellCommand, buyCommand] = this.gameShop.completeTransaction();
-					await this.sendWorldCommand(sellCommand);
-					await this.sendWorldCommand(buyCommand);
+					const transactCommand = this.gameShop.completeTransaction();
+					await this.sendWorldCommand(transactCommand);
 					this.switchTo('travel');
 					return;
 				}
-				this.drawShop();
+				this.interface.draw();
 			});
-			this.drawShop();
+			this.interface.draw();
 			return;
 		}
 		if (stateName === 'equip') {
-			this.inventoryInterface = new InventoryInterface(this.party);
+			this.inventoryInterface = new InventoryInterface(this.party.members);
+			this.inventoryInterface.draw = () => this.drawInventory();
+			this.interface = this.inventoryInterface;
+			const complete = async () => {
+				const equipCommand = this.interface.completeTransaction();
+				await this.sendWorldCommand(equipCommand);
+				this.switchTo('travel');
+			};
 			this.inputCtrl.setState('equip', async (command) => {
 				if (command === 'abort') {
-					this.switchTo('travel');
+					// The UI makes it look like the changes take effect right away, so
+					// we will commit those changes even if the user hits Escape
+					complete();
 					return;
 				}
 				if (command === 'equip close') {
 					this.inventoryInterface.equip();
-					// await this.sendWorldCommand('equip ???'); // FIXME
-					this.switchTo('travel');
+					complete();
 					return;
 				}
 				if (command === 'equip') {
 					this.inventoryInterface.equip();
-					// await this.sendWorldCommand('equip ???'); // FIXME
 				} else if (command === 'unequip') {
 					this.inventoryInterface.unequip();
-					// await this.sendWorldCommand('equip ???'); // FIXME
 				} else if (command === 'toggle') {
 					this.inventoryInterface.toggle();
-					// await this.sendWorldCommand('equip ???'); // FIXME
 				} else if (command === 'next') {
 					this.inventoryInterface.next(1);
 				} else if (command === 'previous') {
@@ -188,9 +203,9 @@ export default class Game {
 				} else if (command === 'help') {
 					this.inventoryInterface.toggleHelp();
 				}
-				this.drawInventory();
+				this.interface.draw();
 			});
-			this.drawInventory();
+			this.interface.draw();
 			return;
 		}
 		console.warn('Unknown state', stateName);
@@ -198,7 +213,7 @@ export default class Game {
 
 	async executeCommand(commandString) {
 		await wait(10); // TODO: remove eventually
-		console.log('\t\tClient Command:', commandString);
+		console.log('\t\t\tClient Command:', commandString);
 		const aliases = {
 			vol: 'volume',
 		};
@@ -233,7 +248,7 @@ export default class Game {
 		// Check if the command needs a direction
 		if (commandWords.includes('nearby')) {
 			const i = commandWords.findIndex((w) => w === 'nearby');
-			const { visibleWorldX, visibleWorldY } = this.party.avatar;
+			const { visibleWorldX, visibleWorldY } = this.getPartyLeader();
 			const ents = this.findVisibleEntitiesNearby(visibleWorldX, visibleWorldY);
 			// If there is only one thing nearby, then do the action in that direction
 			if (ents.length === 1) {
@@ -325,6 +340,7 @@ export default class Game {
 
 	drawAll() {
 		this.screen.drawAll(this.visibleWorld, this.party);
+		this.interface?.draw();
 	}
 
 	/** Loop through deltas - assuming they are in worldTime order */
@@ -351,7 +367,7 @@ export default class Game {
 			}
 		});
 		for (let i = messagesBackwards.length - 1; i >= 0; i -= 1) {
-			console.log('\t\tPrint', messagesBackwards[i]);
+			// console.log('\t\t\tPrint:', messagesBackwards[i]);
 			this.screen.mainConsole.print(messagesBackwards[i]);
 		}
 	}
@@ -384,6 +400,8 @@ export default class Game {
 		this.visibleWorld = Object.freeze(structuredClone(visibleWorld));
 		this.party = Object.freeze(structuredClone(party));
 		// console.log(data);
+		// If we're not in travel mode then don't redraw or it could interrupt the interface
+		// the user is in.
 		const switchToData = this.handleDeltas(deltas);
 		// if (outcome.message) print(outcome.message);
 		// Refocus the map on the avatar, and re-draw

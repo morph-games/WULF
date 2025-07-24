@@ -45,6 +45,12 @@ const wait = (t) => new Promise((resolve) => { setTimeout(resolve, t); });
 
 const capitalizeFirst = (string) => string.charAt(0).toUpperCase() + string.slice(1);
 
+function stringToNumber(str) {
+	if (!str) return null;
+	const n = Number(str);
+	return Number.isNaN(n) ? null : n;
+}
+
 // Entities
 
 function areEntitiesTheSame(ent1, ent2) {
@@ -70,6 +76,7 @@ export {
 	wait,
 	// String
 	capitalizeFirst,
+	stringToNumber,
 	// Vector math
 	distanceSquared,
 	distance,

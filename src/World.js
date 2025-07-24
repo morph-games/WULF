@@ -29,7 +29,7 @@ export default class World {
 		this.worldLog = [];
 		this.deltas = [];
 		this.maxDeltas = 99;
-		this.ents.allAllFromMaps(this.maps);
+		this.ents.addAllFromMaps(this.maps);
 		this.saveLoadManager = new WorldSaveLoadManager();
 	}
 
@@ -41,7 +41,6 @@ export default class World {
 			mapId: overworldMapId,
 			x: 10,
 			y: 6,
-			stats: {}, // TODO
 		});
 		this.time = 100; // TODO: load from disk
 		// eslint-disable-next-line no-param-reassign
@@ -138,16 +137,23 @@ export default class World {
 		return [ent.sprite, ent.x - startX, ent.y - startY];
 	}
 
+	findAvatar() { // For debugging
+		return this.ents.all.find((ent) => ent.isAvatar);
+	}
+
 	async getParty(whoId) {
 		const { centerVisibleWorldX, centerVisibleWorldY } = this.getVisibleWorldDimensions(whoId);
 		const avatarActor = this.getActor(whoId);
+		const avatar = {
+			...avatarActor,
+			sprite: isAlive(avatarActor) ? avatarActor.sprite : avatarActor.deadSprite,
+			visibleWorldX: centerVisibleWorldX,
+			visibleWorldY: centerVisibleWorldY,
+		};
+		// console.log('getParty', avatarActor?.equipment);
 		return {
-			avatar: {
-				...avatarActor,
-				sprite: isAlive(avatarActor) ? avatarActor.sprite : avatarActor.deadSprite,
-				visibleWorldX: centerVisibleWorldX,
-				visibleWorldY: centerVisibleWorldY,
-			},
+			leaderIndex: 0,
+			members: [avatar],
 		};
 	}
 

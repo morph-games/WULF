@@ -22,8 +22,17 @@ function getMapEntitiesAtActor(mapEnts, actor) {
 	return getMapEntitiesAt(mapEnts, actor.x, actor.y).filter((ent) => ent.entId !== actor.entId);
 }
 
-function getMapEntitiesNextToActor(mapEnts, actor, direction) {
-	const directionCoordinates = COORDINATE_MAP[direction];
+function getMapEntitiesNextToActor(mapEnts, actor, directionOrEntId) {
+	const entId = Number(directionOrEntId);
+	if (!Number.isNaN(entId)) {
+		return mapEnts.filter((ent) => {
+			if (ent.entId !== entId) return false;
+			return (
+				Math.abs(actor.x - ent.x) + Math.abs(actor.y - ent.y) // cardinal step distance
+			) <= 1;
+		});
+	}
+	const directionCoordinates = COORDINATE_MAP[directionOrEntId];
 	if (!directionCoordinates) return [];
 	const newX = actor.x + directionCoordinates[0];
 	const newY = actor.y + directionCoordinates[1];
