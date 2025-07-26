@@ -6,6 +6,7 @@ import overworld from './maps/overworld.js';
 import castle1 from './maps/castle1.js';
 import castle1B from './maps/castle1B.js';
 import dungeon1 from './maps/dungeon1.js';
+import town1 from './maps/town1.js';
 
 const FONT_SIZE = 8;
 const SCREEN_WIDTH_LETTERS = SCREEN_WIDTH / FONT_SIZE;
@@ -128,13 +129,14 @@ export default {
 			castle1,
 			castle1B,
 			dungeon1,
+			town1,
 		},
 		globalLegend: {
 			'.': ['grass'],
 			':': ['dirt'],
 			'~': ['water'],
 			'^': ['mountain'],
-			'f': ['forest'],
+			'&': ['forest'],
 			'-': ['floor'],
 			'*': ['floor', 'torch'],
 			'|': ['floor', 'pillar'],

@@ -66,7 +66,7 @@ export default {
 	],
 	legend: {
 		'1': ['grass', 'village'],
-		'2': ['grass', 'town'],
+		'2': ['grass', { type: 'town', enter: { mapKey: 'town1' } }],
 		'3': ['grass', { type: 'city', enter: { mapKey: 'castle1' } }],
 		'4': ['grass', { type: 'dungeon', enter: { mapKey: 'dungeon1' } }],
 		'K': ['grass', { type: 'king' }],
@@ -78,6 +78,7 @@ export default {
 		'g': ['water', 'galleon'],
 		'b': ['grass', 'broom'],
 		'D': ['grass', 'dwarf'],
+		'f': ['forest'],
 	},
 	spawn: { // WIP
 		types: ['beastman'],

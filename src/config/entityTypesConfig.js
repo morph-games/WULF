@@ -1,3 +1,9 @@
+const wall = {
+	type: 'terrain',
+	sprite: 'stone-wall-0',
+	obstacleId: 1,
+};
+
 export default {
 	entity: {
 		sprite: 'void',
@@ -17,6 +23,32 @@ export default {
 	floor3: { type: 'terrain', sprite: 'floor-3', obstacleId: 7 },
 	floor4: { type: 'terrain', sprite: 'floor-4', obstacleId: 7 },
 	floor5: { type: 'terrain', sprite: 'floor-5', obstacleId: 7 },
+	wallA: { ...wall, sprite: 'A' },
+	wallB: { ...wall, sprite: 'B' },
+	wallC: { ...wall, sprite: 'C' },
+	wallD: { ...wall, sprite: 'D' },
+	wallE: { ...wall, sprite: 'E' },
+	wallF: { ...wall, sprite: 'F' },
+	wallG: { ...wall, sprite: 'G' },
+	wallH: { ...wall, sprite: 'H' },
+	wallI: { ...wall, sprite: 'I' },
+	wallJ: { ...wall, sprite: 'J' },
+	wallK: { ...wall, sprite: 'K' },
+	wallL: { ...wall, sprite: 'L' },
+	wallM: { ...wall, sprite: 'M' },
+	wallN: { ...wall, sprite: 'N' },
+	wallO: { ...wall, sprite: 'O' },
+	wallP: { ...wall, sprite: 'P' },
+	wallQ: { ...wall, sprite: 'Q' },
+	wallR: { ...wall, sprite: 'R' },
+	wallS: { ...wall, sprite: 'S' },
+	wallT: { ...wall, sprite: 'T' },
+	wallU: { ...wall, sprite: 'U' },
+	wallV: { ...wall, sprite: 'V' },
+	wallW: { ...wall, sprite: 'W' },
+	wallX: { ...wall, sprite: 'X' },
+	wallY: { ...wall, sprite: 'Y' },
+	wallZ: { ...wall, sprite: 'Z' },
 	grass: {
 		type: 'terrain',
 		sprite: 'grass-0',
@@ -41,14 +73,15 @@ export default {
 		// variations: 4,
 		obstacleId: 11,
 	},
-	wall: {
-		type: 'terrain',
-		sprite: 'stone-wall-0',
-		obstacleId: 1,
-	},
+	wall,
 	darkWall: {
 		type: 'terrain',
 		sprite: 'dark-stone-0',
+		obstacleId: 1,
+	},
+	woodWall: {
+		type: 'terrain',
+		sprite: 'wood-wall-0',
 		obstacleId: 1,
 	},
 	door: {
@@ -74,6 +107,18 @@ export default {
 	},
 	signLeft: { type: 'terrain', sprite: 'stone-sign-left', obstacleId: 1 },
 	signRight: { type: 'terrain', sprite: 'stone-sign-right', obstacleId: 1 },
+	wheat: {
+		type: 'terrain',
+		sprite: 'wheat-0',
+		// variations: 4,
+		obstacleId: 7,
+	},
+	tree: {
+		type: 'terrain',
+		sprite: 'tree-0',
+		// variations: 4,
+		obstacleId: 10,
+	},
 
 	// ---- Overworld Destinations ----
 	destination: {
@@ -217,12 +262,43 @@ export default {
 		sprite: 'man-0',
 		plan: { randomMove: 0.5 },
 	},
+	worker: {
+		type: 'wanderer',
+		sprite: 'blacksmith-0',
+		plan: { randomMove: 0.1 },
+	},
 	man: {
 		type: 'wanderer',
 	},
 	woman: {
 		type: 'wanderer',
 		sprite: 'woman-0',
+	},
+	mage: {
+		type: 'worker',
+		sprite: 'mage-0',
+		plan: { randomMove: 0.1 },
+	},
+	blacksmith: {
+		type: 'worker',
+		sprite: 'blacksmith-0',
+	},
+	wench: {
+		type: 'wanderer',
+		sprite: 'wench-0',
+	},
+	jester: {
+		type: 'wanderer',
+		sprite: 'jester-0',
+		plan: { randomMove: 0.9 },
+	},
+	merchant: {
+		type: 'actor',
+		sprite: 'merchant-0',
+	},
+	shopkeeper: {
+		type: 'merchant',
+		sprite: 'shopkeeper-0',
 	},
 	guard: {
 		type: 'wanderer',

@@ -1,6 +1,6 @@
 export default {
 	main: {
-		url: './images/wulf-spritesheet-11.png',
+		url: './images/wulf-spritesheet-12.png',
 		size: 16,
 		atlas: [
 			{ names: [
@@ -16,7 +16,7 @@ export default {
 			] },
 			{ names: [
 				'dirt', 'floor-0', 'floor-1', 'floor-2', 'floor-3', 'floor-4', 'floor-5', 'floor-6',
-				'', '', '', '', '', '', '', '',
+				'wheat-0', 'tree-0', '', '', '', '', '', '',
 				'pillar-0', 'torch-0', 'torch-1', 'torch-2',
 			] },
 			{ names: [ // props and transportation
@@ -24,7 +24,7 @@ export default {
 				'stone-sign-left', 'stone-sign-right',
 				'dark-stone-0', 'dark-stone-1',
 				'dark-stone-to-stone', 'stone-to-dark-stone',
-				'green-stone',
+				'green-stone', 'wood-wall-0',
 			] },
 			{ names: [
 				'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
@@ -57,10 +57,17 @@ export default {
 			},
 			{ names: [
 				'orc-0', 'orc-1', 'orc-2', 'orc-3',
-				'wildman-0',
+				'wildman-0', '', '', '',
+				'mage-0', '', '', '',
+				'blacksmith-0', '', '', '',
+				'wench-0', '', '', '',
 			] },
 			{ names: [
-				'dwarf-0',
+				'dwarf-0', '', '', '',
+				'', '', '', '',
+				'jester-0', '', '', '',
+				'merchant-0', '', '', '',
+				'shopkeeper-0', '', '', '',
 			] },
 			{ names: [
 				'elf-0',
